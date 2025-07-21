@@ -1,5 +1,5 @@
-import React from 'react';
-import { Search, Plus } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search, Plus, Users, MessageCircle } from 'lucide-react';
 import { Chat } from '../types';
 
 interface ChatListProps {
@@ -8,9 +8,22 @@ interface ChatListProps {
   onChatSelect: (chatId: string) => void;
   isDarkMode: boolean;
   colorPalette: string;
+  onShowFriendSearch: () => void;
+  onShowGroupCreation: () => void;
 }
 
-export default function ChatList({ chats, selectedChatId, onChatSelect, isDarkMode, colorPalette }: ChatListProps) {
+export default function ChatList({ 
+  chats, 
+  selectedChatId, 
+  onChatSelect, 
+  isDarkMode, 
+  colorPalette,
+  onShowFriendSearch,
+  onShowGroupCreation
+}: ChatListProps) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showCreateMenu, setShowCreateMenu] = useState(false);
+
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -32,25 +45,61 @@ export default function ChatList({ chats, selectedChatId, onChatSelect, isDarkMo
 
   const getColorPalette = () => {
     const palettes = {
-      blue: { primary: '#3B82F6', secondary: '#DBEAFE' },
-      green: { primary: '#10B981', secondary: '#D1FAE5' },
-      purple: { primary: '#8B5CF6', secondary: '#EDE9FE' },
-      orange: { primary: '#F59E0B', secondary: '#FEF3C7' },
+      blue: { primary: '#3B82F6', secondary: '#DBEAFE', light: '#EFF6FF' },
+      green: { primary: '#10B981', secondary: '#D1FAE5', light: '#ECFDF5' },
+      purple: { primary: '#8B5CF6', secondary: '#EDE9FE', light: '#F5F3FF' },
+      orange: { primary: '#F59E0B', secondary: '#FEF3C7', light: '#FFFBEB' },
     };
     return palettes[colorPalette as keyof typeof palettes] || palettes.blue;
   };
 
   const colors = getColorPalette();
 
+  const filteredChats = chats.filter(chat => {
+    const name = chat.user?.name || chat.group?.name || '';
+    return name.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
   return (
-    <div className={`w-80 ${isDarkMode ? 'bg-gray-900' : 'bg-white'} border-r ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} flex flex-col`}>
+    <div className={`w-80 ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'} border-r flex flex-col`}>
       {/* Header */}
       <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
         <div className="flex items-center justify-between mb-4">
           <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Chats</h2>
-          <button className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'} transition-colors`}>
-            <Plus className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
-          </button>
+          <div className="relative">
+            <button 
+              onClick={() => setShowCreateMenu(!showCreateMenu)}
+              className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
+            >
+              <Plus className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
+            </button>
+            
+            {/* Create Menu Dropdown */}
+            {showCreateMenu && (
+              <div className={`absolute right-0 top-full mt-2 ${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'} rounded-xl shadow-xl border py-2 min-w-48 z-50`}>
+                <button
+                  onClick={() => {
+                    onShowFriendSearch();
+                    setShowCreateMenu(false);
+                  }}
+                  className={`w-full px-4 py-2 text-left flex items-center space-x-3 transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-50 text-gray-700'}`}
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span className="text-sm">New Chat</span>
+                </button>
+                <button
+                  onClick={() => {
+                    onShowGroupCreation();
+                    setShowCreateMenu(false);
+                  }}
+                  className={`w-full px-4 py-2 text-left flex items-center space-x-3 transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-50 text-gray-700'}`}
+                >
+                  <Users className="w-4 h-4" />
+                  <span className="text-sm">New Group</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
         
         {/* Search */}
@@ -59,18 +108,21 @@ export default function ChatList({ chats, selectedChatId, onChatSelect, isDarkMo
           <input
             type="text"
             placeholder="Search conversations..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className={`w-full pl-10 pr-4 py-2 rounded-lg border ${
               isDarkMode 
                 ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:bg-gray-700' 
                 : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400'
-            } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all`}
+            } focus:outline-none focus:ring-2 focus:border-transparent transition-all`}
+            style={{ focusRingColor: colors.primary }}
           />
         </div>
       </div>
 
       {/* Chat List */}
       <div className="flex-1 overflow-y-auto">
-        {chats.map((chat) => (
+        {filteredChats.map((chat) => (
           <div
             key={chat.id}
             onClick={() => onChatSelect(chat.id)}
@@ -82,37 +134,62 @@ export default function ChatList({ chats, selectedChatId, onChatSelect, isDarkMo
                 : 'hover:bg-gray-50'
             }`}
             style={selectedChatId === chat.id ? {
-              backgroundColor: colors.secondary,
+              backgroundColor: isDarkMode ? colors.primary + '20' : colors.light,
               borderLeftColor: colors.primary
             } : {}}
           >
             <div className="flex items-center space-x-3">
               <div className="relative">
-                <img
-                  src={chat.user.avatar}
-                  alt={chat.user.name}
-                  className="w-12 h-12 rounded-full object-cover"
-                />
-                <div className={`absolute -bottom-1 -right-1 w-4 h-4 ${statusColors[chat.user.status]} rounded-full border-2 ${isDarkMode ? 'border-gray-900' : 'border-white'}`}></div>
+                {chat.isGroup ? (
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                    {chat.group?.avatar ? (
+                      <img
+                        src={chat.group.avatar}
+                        alt={chat.group.name}
+                        className="w-12 h-12 rounded-full object-cover"
+                      />
+                    ) : (
+                      <Users className={`w-6 h-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    <img
+                      src={chat.user!.avatar}
+                      alt={chat.user!.name}
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
+                    <div className={`absolute -bottom-1 -right-1 w-4 h-4 ${statusColors[chat.user!.status]} rounded-full border-2 ${isDarkMode ? 'border-gray-900' : 'border-white'}`}></div>
+                  </>
+                )}
               </div>
               
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
-                  <h3 className={`font-semibold truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    {chat.user.name}
-                  </h3>
+                  <div className="flex items-center space-x-2">
+                    <h3 className={`font-semibold truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {chat.user?.name || chat.group?.name}
+                    </h3>
+                    {chat.isGroup && (
+                      <Users className={`w-4 h-4 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
+                    )}
+                  </div>
                   <span className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
                     {formatTime(chat.timestamp)}
                   </span>
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <p className={`text-sm truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} ${chat.isTyping ? 'italic text-blue-500' : ''}`}>
+                  <p className={`text-sm truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} ${chat.isTyping ? 'italic' : ''}`}
+                     style={chat.isTyping ? { color: colors.primary } : {}}>
                     {chat.isTyping ? 'Typing...' : chat.lastMessage}
                   </p>
                   
                   {chat.unreadCount > 0 && (
-                    <span className="bg-blue-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                    <span 
+                      className="text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center"
+                      style={{ backgroundColor: colors.primary }}
+                    >
                       {chat.unreadCount > 99 ? '99+' : chat.unreadCount}
                     </span>
                   )}

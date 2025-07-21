@@ -10,7 +10,11 @@ import ChatWindow from './components/ChatWindow';
 import VideoCall from './components/VideoCall';
 import UserProfile from './components/UserProfile';
 import SplashScreen from './components/SplashScreen';
-import { User, Chat, Message, CallState, AuthState, AppSettings } from './types';
+import FriendSearch from './components/FriendSearch';
+import NotificationPanel from './components/NotificationPanel';
+import CallHistory from './components/CallHistory';
+import GroupCreation from './components/GroupCreation';
+import { User, Chat, Message, CallState, AuthState, AppSettings, FriendRequest, Friend, Group, Notification, CallHistory as CallHistoryType, UploadProgress } from './types';
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -22,12 +26,19 @@ function App() {
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showProfilePanel, setShowProfilePanel] = useState(false);
+  const [showFriendSearch, setShowFriendSearch] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showCallHistory, setShowCallHistory] = useState(false);
+  const [showGroupCreation, setShowGroupCreation] = useState(false);
+  
+  // Default to dark mode
   const [settings, setSettings] = useState<AppSettings>({
-    theme: 'light',
+    theme: 'dark',
     colorPalette: 'blue',
     fontSize: 'medium',
     fontStyle: 'inter'
   });
+  
   const isDarkMode = settings.theme === 'dark';
   const [activeView, setActiveView] = useState('chats');
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
@@ -52,8 +63,80 @@ function App() {
 
   const [userStatus, setUserStatus] = useState<User['status']>('online');
 
-  // Mock chats
-  const [chats] = useState<Chat[]>([
+  // Mock friends
+  const [friends, setFriends] = useState<Friend[]>([
+    {
+      id: '1',
+      user: {
+        id: '2',
+        name: 'Sarah Williams',
+        avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&dpr=2',
+        status: 'online',
+        email: 'sarah.williams@company.com',
+        phone: '+1 (555) 234-5678'
+      },
+      addedAt: new Date().toISOString()
+    },
+    {
+      id: '2',
+      user: {
+        id: '3',
+        name: 'Mike Chen',
+        avatar: 'https://images.pexels.com/photos/2182970/pexels-photo-2182970.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&dpr=2',
+        status: 'away',
+        email: 'mike.chen@company.com',
+        lastSeen: 'Last seen 2 hours ago'
+      },
+      addedAt: new Date().toISOString()
+    }
+  ]);
+
+  // Mock friend requests
+  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([
+    {
+      id: '1',
+      senderId: '4',
+      receiverId: '1',
+      senderName: 'Emily Davis',
+      senderAvatar: 'https://images.pexels.com/photos/1674752/pexels-photo-1674752.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&dpr=2',
+      timestamp: new Date().toISOString(),
+      status: 'pending'
+    }
+  ]);
+
+  // Mock groups
+  const [groups, setGroups] = useState<Group[]>([
+    {
+      id: 'group1',
+      name: 'Project Team',
+      avatar: 'https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&dpr=2',
+      description: 'Main project discussion',
+      members: [
+        {
+          user: currentUser,
+          role: 'admin',
+          joinedAt: new Date().toISOString()
+        },
+        {
+          user: {
+            id: '2',
+            name: 'Sarah Williams',
+            avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&dpr=2',
+            status: 'online',
+            email: 'sarah.williams@company.com'
+          },
+          role: 'member',
+          joinedAt: new Date().toISOString()
+        }
+      ],
+      createdBy: '1',
+      createdAt: new Date().toISOString(),
+      isGroup: true
+    }
+  ]);
+
+  // Mock chats (including groups)
+  const [chats, setChats] = useState<Chat[]>([
     {
       id: '1',
       user: {
@@ -66,7 +149,16 @@ function App() {
       },
       lastMessage: 'Hey! How are you doing today?',
       timestamp: new Date().toISOString(),
-      unreadCount: 2
+      unreadCount: 2,
+      isGroup: false
+    },
+    {
+      id: 'group1',
+      group: groups[0],
+      lastMessage: 'Meeting at 3 PM today',
+      timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+      unreadCount: 1,
+      isGroup: true
     },
     {
       id: '2',
@@ -80,21 +172,65 @@ function App() {
       },
       lastMessage: 'Thanks for the project update!',
       timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      unreadCount: 0
+      unreadCount: 0,
+      isGroup: false
+    }
+  ]);
+
+  // Mock notifications
+  const [notifications, setNotifications] = useState<Notification[]>([
+    {
+      id: '1',
+      type: 'friend_request',
+      title: 'New Friend Request',
+      message: 'Emily Davis sent you a friend request',
+      timestamp: new Date().toISOString(),
+      isRead: false,
+      actionData: { requestId: '1' }
     },
     {
-      id: '3',
-      user: {
-        id: '4',
-        name: 'Emily Davis',
-        avatar: 'https://images.pexels.com/photos/1674752/pexels-photo-1674752.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&dpr=2',
-        status: 'dnd',
-        email: 'emily.davis@company.com'
-      },
-      lastMessage: 'Can we schedule a meeting tomorrow?',
+      id: '2',
+      type: 'message',
+      title: 'New Message',
+      message: 'Sarah Williams: Hey! How are you doing today?',
+      timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+      isRead: false
+    }
+  ]);
+
+  // Mock call history
+  const [callHistory, setCallHistory] = useState<CallHistoryType[]>([
+    {
+      id: '1',
+      participants: [
+        {
+          id: '2',
+          name: 'Sarah Williams',
+          avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&dpr=2',
+          status: 'online'
+        }
+      ],
+      type: 'video',
+      duration: 1245,
+      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      status: 'completed',
+      isGroup: false
+    },
+    {
+      id: '2',
+      participants: [
+        {
+          id: '3',
+          name: 'Mike Chen',
+          avatar: 'https://images.pexels.com/photos/2182970/pexels-photo-2182970.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&dpr=2',
+          status: 'away'
+        }
+      ],
+      type: 'voice',
+      duration: 0,
       timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-      unreadCount: 1,
-      isTyping: false
+      status: 'missed',
+      isGroup: false
     }
   ]);
 
@@ -105,14 +241,16 @@ function App() {
       senderId: '2',
       content: 'Hey Alex! How are you doing today?',
       timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-      type: 'text'
+      type: 'text',
+      status: 'seen'
     },
     {
       id: '2',
       senderId: '1',
       content: 'Hi Sarah! I\'m doing great, thanks for asking. How about you?',
       timestamp: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
-      type: 'text'
+      type: 'text',
+      status: 'seen'
     },
     {
       id: '3',
@@ -120,16 +258,20 @@ function App() {
       content: 'I\'m good too! Just finished the presentation for tomorrow.',
       timestamp: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
       type: 'text',
-      reactions: [{ emoji: '👍', users: ['1'] }]
+      reactions: [{ emoji: '👍', users: ['1'] }],
+      status: 'seen'
     },
     {
       id: '4',
       senderId: '1',
       content: 'That\'s awesome! I\'m sure it will go well.',
       timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-      type: 'text'
+      type: 'text',
+      status: 'delivered'
     }
   ]);
+
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress[]>([]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -154,7 +296,6 @@ function App() {
   }, [callState.isActive]);
 
   const handleLogin = (email: string, password: string) => {
-    // Simulate authentication
     setAuthState({
       isAuthenticated: true,
       user: { ...currentUser, email }
@@ -163,7 +304,6 @@ function App() {
   };
 
   const handleSignup = (name: string, email: string, password: string) => {
-    // Simulate registration
     setAuthState({
       isAuthenticated: true,
       user: { ...currentUser, name, email }
@@ -183,33 +323,71 @@ function App() {
     setShowProfilePanel(false);
   };
 
-  const selectedUser = selectedChatId 
-    ? chats.find(chat => chat.id === selectedChatId)?.user 
+  const selectedChat = selectedChatId 
+    ? chats.find(chat => chat.id === selectedChatId)
     : null;
 
-  const handleSendMessage = (content: string) => {
+  const selectedUser = selectedChat?.user;
+  const selectedGroup = selectedChat?.group;
+
+  const handleSendMessage = (content: string, replyTo?: string) => {
     const newMessage: Message = {
       id: Date.now().toString(),
       senderId: currentUser.id,
       content,
       timestamp: new Date().toISOString(),
-      type: 'text'
+      type: 'text',
+      status: 'sending',
+      replyTo
     };
     setMessages(prev => [...prev, newMessage]);
+    
+    // Simulate message delivery
+    setTimeout(() => {
+      setMessages(prev => prev.map(msg => 
+        msg.id === newMessage.id ? { ...msg, status: 'sent' } : msg
+      ));
+    }, 1000);
   };
 
   const handleStartCall = (isVideo: boolean) => {
+    if (selectedGroup) {
+      // Check if user is admin for group calls
+      const userMember = selectedGroup.members.find(m => m.user.id === currentUser.id);
+      if (userMember?.role !== 'admin') {
+        // Show error or notification
+        return;
+      }
+    }
+
     setCallState({
       isActive: true,
-      user: selectedUser || undefined,
+      user: selectedUser,
+      group: selectedGroup,
       isVideo,
       isMuted: false,
       isVideoOff: false,
-      duration: 0
+      duration: 0,
+      participants: selectedGroup ? selectedGroup.members.map(m => m.user) : [selectedUser!]
     });
   };
 
   const handleEndCall = () => {
+    // Add to call history
+    if (selectedUser || selectedGroup) {
+      const newCall: CallHistoryType = {
+        id: Date.now().toString(),
+        participants: selectedGroup ? selectedGroup.members.map(m => m.user) : [selectedUser!],
+        type: callState.isVideo ? 'video' : 'voice',
+        duration: callState.duration,
+        timestamp: new Date().toISOString(),
+        status: 'completed',
+        isGroup: !!selectedGroup,
+        groupName: selectedGroup?.name
+      };
+      setCallHistory(prev => [newCall, ...prev]);
+    }
+
     setCallState({
       isActive: false,
       isVideo: false,
@@ -227,7 +405,84 @@ function App() {
     setCallState(prev => ({ ...prev, isVideoOff: !prev.isVideoOff }));
   };
 
+  const handleAcceptFriendRequest = (requestId: string) => {
+    const request = friendRequests.find(r => r.id === requestId);
+    if (request) {
+      const newFriend: Friend = {
+        id: Date.now().toString(),
+        user: {
+          id: request.senderId,
+          name: request.senderName,
+          avatar: request.senderAvatar,
+          status: 'online'
+        },
+        addedAt: new Date().toISOString()
+      };
+      setFriends(prev => [...prev, newFriend]);
+      setFriendRequests(prev => prev.filter(r => r.id !== requestId));
+      
+      // Remove notification
+      setNotifications(prev => prev.filter(n => n.actionData?.requestId !== requestId));
+    }
+  };
+
+  const handleRejectFriendRequest = (requestId: string) => {
+    setFriendRequests(prev => prev.filter(r => r.id !== requestId));
+    setNotifications(prev => prev.filter(n => n.actionData?.requestId !== requestId));
+  };
+
+  const handleCreateGroup = (name: string, description: string, memberIds: string[]) => {
+    const newGroup: Group = {
+      id: `group${Date.now()}`,
+      name,
+      description,
+      members: [
+        {
+          user: currentUser,
+          role: 'admin',
+          joinedAt: new Date().toISOString()
+        },
+        ...memberIds.map(id => {
+          const friend = friends.find(f => f.user.id === id);
+          return {
+            user: friend!.user,
+            role: 'member' as const,
+            joinedAt: new Date().toISOString()
+          };
+        })
+      ],
+      createdBy: currentUser.id,
+      createdAt: new Date().toISOString(),
+      isGroup: true
+    };
+
+    setGroups(prev => [...prev, newGroup]);
+    
+    // Add to chats
+    const newChat: Chat = {
+      id: newGroup.id,
+      group: newGroup,
+      lastMessage: 'Group created',
+      timestamp: new Date().toISOString(),
+      unreadCount: 0,
+      isGroup: true
+    };
+    setChats(prev => [newChat, ...prev]);
+    setShowGroupCreation(false);
+  };
+
+  const handleMarkNotificationRead = (notificationId: string) => {
+    setNotifications(prev => prev.map(n => 
+      n.id === notificationId ? { ...n, isRead: true } : n
+    ));
+  };
+
+  const handleMarkAllNotificationsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+  };
+
   const currentUserWithStatus = { ...currentUser, status: userStatus };
+  const unreadNotificationCount = notifications.filter(n => !n.isRead).length;
 
   // Show authentication screens if not authenticated
   if (!authState.isAuthenticated) {
@@ -259,12 +514,15 @@ function App() {
           <Sidebar
             currentUser={currentUserWithStatus}
             isDarkMode={isDarkMode}
+            colorPalette={settings.colorPalette}
             onToggleDarkMode={() => setSettings(prev => ({ ...prev, theme: prev.theme === 'light' ? 'dark' : 'light' }))}
             onStatusChange={setUserStatus}
             onShowSettings={() => setShowSettings(true)}
             onLogout={() => setShowLogoutConfirmation(true)}
             activeView={activeView}
             onViewChange={setActiveView}
+            unreadNotificationCount={unreadNotificationCount}
+            onShowNotifications={() => setShowNotifications(true)}
           />
           
           {activeView === 'chats' && (
@@ -277,10 +535,13 @@ function App() {
                     onChatSelect={setSelectedChatId}
                     isDarkMode={isDarkMode}
                     colorPalette={settings.colorPalette}
+                    onShowFriendSearch={() => setShowFriendSearch(true)}
+                    onShowGroupCreation={() => setShowGroupCreation(true)}
                   />
                   
                   <ChatWindow
                     selectedUser={selectedUser}
+                    selectedGroup={selectedGroup}
                     messages={selectedChatId === '1' ? messages : []}
                     currentUserId={currentUser.id}
                     onSendMessage={handleSendMessage}
@@ -288,22 +549,35 @@ function App() {
                     onShowUserProfile={() => setShowProfilePanel(true)}
                     isDarkMode={isDarkMode}
                     colorPalette={settings.colorPalette}
+                    uploadProgress={uploadProgress}
+                    setUploadProgress={setUploadProgress}
                   />
                 </>
               ) : (
-                selectedUser && (
+                (selectedUser || selectedGroup) && (
                   <ProfilePanel
                     user={selectedUser}
+                    group={selectedGroup}
+                    currentUser={currentUser}
                     onBack={() => setShowProfilePanel(false)}
                     onStartCall={handleStartCall}
                     isDarkMode={isDarkMode}
+                    colorPalette={settings.colorPalette}
                   />
                 )
               )}
             </>
           )}
           
-          {activeView !== 'chats' && (
+          {activeView === 'calls' && (
+            <CallHistory
+              callHistory={callHistory}
+              isDarkMode={isDarkMode}
+              colorPalette={settings.colorPalette}
+            />
+          )}
+          
+          {activeView !== 'chats' && activeView !== 'calls' && (
             <div className={`flex-1 ${isDarkMode ? 'bg-gray-900' : 'bg-white'} flex items-center justify-center`}>
               <div className="text-center">
                 <h3 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
@@ -337,12 +611,46 @@ function App() {
             settings={settings}
             onSettingsChange={setSettings}
             isDarkMode={isDarkMode}
+            colorPalette={settings.colorPalette}
             onToggleDarkMode={() => setSettings(prev => ({ ...prev, theme: prev.theme === 'light' ? 'dark' : 'light' }))}
           />
           
-          {selectedUser && (
+          <FriendSearch
+            isVisible={showFriendSearch}
+            onClose={() => setShowFriendSearch(false)}
+            friends={friends}
+            friendRequests={friendRequests}
+            onAcceptFriendRequest={handleAcceptFriendRequest}
+            onRejectFriendRequest={handleRejectFriendRequest}
+            isDarkMode={isDarkMode}
+            colorPalette={settings.colorPalette}
+          />
+          
+          <NotificationPanel
+            isVisible={showNotifications}
+            onClose={() => setShowNotifications(false)}
+            notifications={notifications}
+            onMarkAsRead={handleMarkNotificationRead}
+            onMarkAllAsRead={handleMarkAllNotificationsRead}
+            onAcceptFriendRequest={handleAcceptFriendRequest}
+            onRejectFriendRequest={handleRejectFriendRequest}
+            isDarkMode={isDarkMode}
+            colorPalette={settings.colorPalette}
+          />
+          
+          <GroupCreation
+            isVisible={showGroupCreation}
+            onClose={() => setShowGroupCreation(false)}
+            friends={friends}
+            onCreateGroup={handleCreateGroup}
+            isDarkMode={isDarkMode}
+            colorPalette={settings.colorPalette}
+          />
+          
+          {(selectedUser || selectedGroup) && (
             <UserProfile
               user={selectedUser}
+              group={selectedGroup}
               isVisible={showUserProfile}
               onClose={() => setShowUserProfile(false)}
               isDarkMode={isDarkMode}

@@ -8,20 +8,29 @@ interface SettingsPanelProps {
   settings: AppSettings;
   onSettingsChange: (settings: AppSettings) => void;
   isDarkMode: boolean;
+  colorPalette: string;
   onToggleDarkMode: () => void;
 }
 
-export default function SettingsPanel({ isVisible, onClose, settings, onSettingsChange, isDarkMode, onToggleDarkMode }: SettingsPanelProps) {
+export default function SettingsPanel({ 
+  isVisible, 
+  onClose, 
+  settings, 
+  onSettingsChange, 
+  isDarkMode, 
+  colorPalette,
+  onToggleDarkMode 
+}: SettingsPanelProps) {
   const [activeTab, setActiveTab] = useState('appearance');
 
   const getColorPalette = () => {
     const palettes = {
-      blue: { primary: '#3B82F6', secondary: '#DBEAFE' },
-      green: { primary: '#10B981', secondary: '#D1FAE5' },
-      purple: { primary: '#8B5CF6', secondary: '#EDE9FE' },
-      orange: { primary: '#F59E0B', secondary: '#FEF3C7' },
+      blue: { primary: '#3B82F6', secondary: '#DBEAFE', light: '#EFF6FF' },
+      green: { primary: '#10B981', secondary: '#D1FAE5', light: '#ECFDF5' },
+      purple: { primary: '#8B5CF6', secondary: '#EDE9FE', light: '#F5F3FF' },
+      orange: { primary: '#F59E0B', secondary: '#FEF3C7', light: '#FFFBEB' },
     };
-    return palettes[settings.colorPalette as keyof typeof palettes] || palettes.blue;
+    return palettes[colorPalette as keyof typeof palettes] || palettes.blue;
   };
 
   const colors = getColorPalette();
@@ -113,12 +122,15 @@ export default function SettingsPanel({ isVisible, onClose, settings, onSettings
                       onClick={onToggleDarkMode}
                       className={`flex items-center space-x-2 px-4 py-3 rounded-xl border-2 transition-all ${
                         settings.theme === 'light'
-                          ? 'border-blue-500 bg-blue-50'
+                          ? 'border-blue-500'
                           : isDarkMode
                           ? 'border-gray-700 hover:border-gray-600'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
-                      style={settings.theme === 'light' ? { borderColor: colors.primary, backgroundColor: colors.secondary } : {}}
+                      style={settings.theme === 'light' ? { 
+                        borderColor: colors.primary, 
+                        backgroundColor: isDarkMode ? colors.primary + '20' : colors.light 
+                      } : {}}
                     >
                       <Sun className="w-5 h-5" />
                       <span className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Light</span>
@@ -132,7 +144,10 @@ export default function SettingsPanel({ isVisible, onClose, settings, onSettings
                           ? 'border-gray-700 hover:border-gray-600'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
-                      style={settings.theme === 'dark' ? { borderColor: colors.primary, backgroundColor: isDarkMode ? colors.primary + '20' : colors.secondary } : {}}
+                      style={settings.theme === 'dark' ? { 
+                        borderColor: colors.primary, 
+                        backgroundColor: isDarkMode ? colors.primary + '20' : colors.light 
+                      } : {}}
                     >
                       <Moon className="w-5 h-5" />
                       <span className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Dark</span>
@@ -195,7 +210,7 @@ export default function SettingsPanel({ isVisible, onClose, settings, onSettings
                         }`}
                         style={settings.fontSize === size.id ? {
                           borderColor: colors.primary,
-                          backgroundColor: isDarkMode ? colors.primary + '20' : colors.secondary
+                          backgroundColor: isDarkMode ? colors.primary + '20' : colors.light
                         } : {}}
                       >
                         <span className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -227,7 +242,7 @@ export default function SettingsPanel({ isVisible, onClose, settings, onSettings
                         }`}
                         style={settings.fontStyle === font.id ? {
                           borderColor: colors.primary,
-                          backgroundColor: isDarkMode ? colors.primary + '20' : colors.secondary
+                          backgroundColor: isDarkMode ? colors.primary + '20' : colors.light
                         } : {}}
                       >
                         <span className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
