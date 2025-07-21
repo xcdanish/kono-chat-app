@@ -10,6 +10,7 @@ interface ProfilePanelProps {
   onStartCall: (isVideo: boolean) => void;
   isDarkMode: boolean;
   colorPalette: string;
+  onShowGroupManagement: () => void;
 }
 
 export default function ProfilePanel({ 
@@ -19,7 +20,8 @@ export default function ProfilePanel({
   onBack, 
   onStartCall, 
   isDarkMode, 
-  colorPalette 
+  colorPalette,
+  onShowGroupManagement
 }: ProfilePanelProps) {
   const getColorPalette = () => {
     const palettes = {
@@ -221,7 +223,10 @@ export default function ProfilePanel({
               </h3>
               {isAdmin && (
                 <button className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'}`}>
-                  <Settings className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
+                  <Settings 
+                    onClick={onShowGroupManagement}
+                    className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} 
+                  />
                 </button>
               )}
             </div>

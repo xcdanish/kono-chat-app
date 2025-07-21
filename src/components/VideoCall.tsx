@@ -38,8 +38,10 @@ export default function VideoCall({
   if (!callState.isActive) return null;
 
   return (
-    <div 
-      className="fixed inset-0 bg-gray-900 z-50 flex flex-col"
+    <div className={`
+      fixed inset-0 bg-gray-900 z-50 flex flex-col
+      ${callState.isActive ? 'block' : 'hidden'}
+    `}
       onMouseMove={() => setShowControls(true)}
     >
       {/* Call Header */}
@@ -108,8 +110,8 @@ export default function VideoCall({
       </div>
 
       {/* Call Controls */}
-      <div className={`absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/50 to-transparent transition-all duration-300 ${showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-        <div className="flex items-center justify-center space-x-6">
+      <div className={`absolute bottom-0 left-0 right-0 p-4 lg:p-6 bg-gradient-to-t from-black/50 to-transparent transition-all duration-300 ${showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+        <div className="flex items-center justify-center space-x-4 lg:space-x-6">
           <button
             onClick={onToggleMute}
             className={`p-4 rounded-full transition-all ${
@@ -118,7 +120,7 @@ export default function VideoCall({
                 : 'bg-gray-700 hover:bg-gray-600'
             } text-white`}
           >
-            {callState.isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+            {callState.isMuted ? <MicOff className="w-5 h-5 lg:w-6 lg:h-6" /> : <Mic className="w-5 h-5 lg:w-6 lg:h-6" />}
           </button>
 
           {callState.isVideo && (
@@ -130,19 +132,19 @@ export default function VideoCall({
                   : 'bg-gray-700 hover:bg-gray-600'
               } text-white`}
             >
-              {callState.isVideoOff ? <VideoOff className="w-6 h-6" /> : <Video className="w-6 h-6" />}
+              {callState.isVideoOff ? <VideoOff className="w-5 h-5 lg:w-6 lg:h-6" /> : <Video className="w-5 h-5 lg:w-6 lg:h-6" />}
             </button>
           )}
 
           <button className="p-4 bg-gray-700 hover:bg-gray-600 rounded-full text-white transition-colors">
-            <Monitor className="w-6 h-6" />
+            <Monitor className="w-5 h-5 lg:w-6 lg:h-6" />
           </button>
 
           <button
             onClick={onEndCall}
             className="p-4 bg-red-500 hover:bg-red-600 rounded-full text-white transition-colors"
           >
-            <Phone className="w-6 h-6" />
+            <Phone className="w-5 h-5 lg:w-6 lg:h-6" />
           </button>
         </div>
       </div>

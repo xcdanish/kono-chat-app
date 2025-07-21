@@ -30,6 +30,8 @@ function App() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showCallHistory, setShowCallHistory] = useState(false);
   const [showGroupCreation, setShowGroupCreation] = useState(false);
+  const [showGroupManagement, setShowGroupManagement] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // Default to dark mode
   const [settings, setSettings] = useState<AppSettings>({
@@ -235,41 +237,61 @@ function App() {
   ]);
 
   // Mock messages
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      senderId: '2',
-      content: 'Hey Alex! How are you doing today?',
-      timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-      type: 'text',
-      status: 'seen'
-    },
-    {
-      id: '2',
-      senderId: '1',
-      content: 'Hi Sarah! I\'m doing great, thanks for asking. How about you?',
-      timestamp: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
-      type: 'text',
-      status: 'seen'
-    },
-    {
-      id: '3',
-      senderId: '2',
-      content: 'I\'m good too! Just finished the presentation for tomorrow.',
-      timestamp: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
-      type: 'text',
-      reactions: [{ emoji: '👍', users: ['1'] }],
-      status: 'seen'
-    },
-    {
-      id: '4',
-      senderId: '1',
-      content: 'That\'s awesome! I\'m sure it will go well.',
-      timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-      type: 'text',
-      status: 'delivered'
-    }
-  ]);
+  const [messages, setMessages] = useState<{ [chatId: string]: Message[] }>({
+    '1': [
+      {
+        id: '1',
+        senderId: '2',
+        content: 'Hey Alex! How are you doing today?',
+        timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+        type: 'text',
+        status: 'seen'
+      },
+      {
+        id: '2',
+        senderId: '1',
+        content: 'Hi Sarah! I\'m doing great, thanks for asking. How about you?',
+        timestamp: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
+        type: 'text',
+        status: 'seen'
+      },
+      {
+        id: '3',
+        senderId: '2',
+        content: 'I\'m good too! Just finished the presentation for tomorrow.',
+        timestamp: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
+        type: 'text',
+        reactions: [{ emoji: '👍', users: ['1'] }],
+        status: 'seen'
+      },
+      {
+        id: '4',
+        senderId: '1',
+        content: 'That\'s awesome! I\'m sure it will go well.',
+        timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+        type: 'text',
+        status: 'delivered'
+      }
+    ],
+    'group1': [
+      {
+        id: 'g1',
+        senderId: '2',
+        content: 'Meeting at 3 PM today',
+        timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+        type: 'text',
+        status: 'seen'
+      },
+      {
+        id: 'g2',
+        senderId: '1',
+        content: 'Sounds good! I\'ll be there.',
+        timestamp: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
+        type: 'text',
+        status: 'delivered'
+      }
+    ]
+  });
 
   const [uploadProgress, setUploadProgress] = useState<UploadProgress[]>([]);
 
@@ -331,6 +353,8 @@ function App() {
   const selectedGroup = selectedChat?.group;
 
   const handleSendMessage = (content: string, replyTo?: string) => {
+    if (!selectedChatId) return;
+    
     const newMessage: Message = {
       id: Date.now().toString(),
       senderId: currentUser.id,
@@ -340,13 +364,20 @@ function App() {
       status: 'sending',
       replyTo
     };
-    setMessages(prev => [...prev, newMessage]);
+    
+    setMessages(prev => ({
+      ...prev,
+      [selectedChatId]: [...(prev[selectedChatId] || []), newMessage]
+    }));
     
     // Simulate message delivery
     setTimeout(() => {
-      setMessages(prev => prev.map(msg => 
-        msg.id === newMessage.id ? { ...msg, status: 'sent' } : msg
-      ));
+      setMessages(prev => ({
+        ...prev,
+        [selectedChatId]: prev[selectedChatId]?.map(msg => 
+          msg.id === newMessage.id ? { ...msg, status: 'sent' } : msg
+        ) || []
+      }));
     }, 1000);
   };
 
@@ -471,6 +502,55 @@ function App() {
     setShowGroupCreation(false);
   };
 
+  const handleAddGroupMember = (groupId: string, memberId: string) => {
+    const friend = friends.find(f => f.user.id === memberId);
+    if (!friend) return;
+
+    setGroups(prev => prev.map(group => {
+      if (group.id === groupId) {
+        return {
+          ...group,
+          members: [...group.members, {
+            user: friend.user,
+            role: 'member',
+            joinedAt: new Date().toISOString()
+          }]
+        };
+      }
+      return group;
+    }));
+
+    // Update chats
+    setChats(prev => prev.map(chat => {
+      if (chat.id === groupId && chat.group) {
+        const updatedGroup = groups.find(g => g.id === groupId);
+        return { ...chat, group: updatedGroup };
+      }
+      return chat;
+    }));
+  };
+
+  const handleRemoveGroupMember = (groupId: string, memberId: string) => {
+    setGroups(prev => prev.map(group => {
+      if (group.id === groupId) {
+        return {
+          ...group,
+          members: group.members.filter(member => member.user.id !== memberId)
+        };
+      }
+      return group;
+    }));
+
+    // Update chats
+    setChats(prev => prev.map(chat => {
+      if (chat.id === groupId && chat.group) {
+        const updatedGroup = groups.find(g => g.id === groupId);
+        return { ...chat, group: updatedGroup };
+      }
+      return chat;
+    }));
+  };
+
   const handleMarkNotificationRead = (notificationId: string) => {
     setNotifications(prev => prev.map(n => 
       n.id === notificationId ? { ...n, isRead: true } : n
@@ -506,11 +586,19 @@ function App() {
   }
 
   return (
-    <div className={`h-screen flex ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <div className={`h-screen flex ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} relative`}>
       <SplashScreen isVisible={showSplash} />
       
       {!showSplash && (
         <>
+          {/* Mobile Menu Overlay */}
+          {isMobileMenuOpen && (
+            <div 
+              className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+          )}
+          
           <Sidebar
             currentUser={currentUserWithStatus}
             isDarkMode={isDarkMode}
@@ -523,12 +611,14 @@ function App() {
             onViewChange={setActiveView}
             unreadNotificationCount={unreadNotificationCount}
             onShowNotifications={() => setShowNotifications(true)}
+            isMobileMenuOpen={isMobileMenuOpen}
+            onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           />
           
           {activeView === 'chats' && (
             <>
               {!showProfilePanel ? (
-                <>
+                <div className="flex flex-1 min-w-0">
                   <ChatList
                     chats={chats}
                     selectedChatId={selectedChatId}
@@ -537,12 +627,13 @@ function App() {
                     colorPalette={settings.colorPalette}
                     onShowFriendSearch={() => setShowFriendSearch(true)}
                     onShowGroupCreation={() => setShowGroupCreation(true)}
+                    onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
                   />
                   
                   <ChatWindow
                     selectedUser={selectedUser}
                     selectedGroup={selectedGroup}
-                    messages={selectedChatId === '1' ? messages : []}
+                    messages={selectedChatId ? messages[selectedChatId] || [] : []}
                     currentUserId={currentUser.id}
                     onSendMessage={handleSendMessage}
                     onStartCall={handleStartCall}
@@ -551,8 +642,9 @@ function App() {
                     colorPalette={settings.colorPalette}
                     uploadProgress={uploadProgress}
                     setUploadProgress={setUploadProgress}
+                    onShowGroupManagement={() => setShowGroupManagement(true)}
                   />
-                </>
+                </div>
               ) : (
                 (selectedUser || selectedGroup) && (
                   <ProfilePanel
@@ -563,6 +655,7 @@ function App() {
                     onStartCall={handleStartCall}
                     isDarkMode={isDarkMode}
                     colorPalette={settings.colorPalette}
+                    onShowGroupManagement={() => setShowGroupManagement(true)}
                   />
                 )
               )}
@@ -643,6 +736,18 @@ function App() {
             onClose={() => setShowGroupCreation(false)}
             friends={friends}
             onCreateGroup={handleCreateGroup}
+            isDarkMode={isDarkMode}
+            colorPalette={settings.colorPalette}
+          />
+          
+          <GroupManagement
+            isVisible={showGroupManagement}
+            onClose={() => setShowGroupManagement(false)}
+            group={selectedGroup}
+            friends={friends}
+            currentUser={currentUser}
+            onAddMember={handleAddGroupMember}
+            onRemoveMember={handleRemoveGroupMember}
             isDarkMode={isDarkMode}
             colorPalette={settings.colorPalette}
           />

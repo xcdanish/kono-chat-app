@@ -14,6 +14,8 @@ interface SidebarProps {
   onViewChange: (view: string) => void;
   unreadNotificationCount: number;
   onShowNotifications: () => void;
+  isMobileMenuOpen: boolean;
+  onToggleMobileMenu: () => void;
 }
 
 export default function Sidebar({ 
@@ -27,7 +29,9 @@ export default function Sidebar({
   activeView,
   onViewChange,
   unreadNotificationCount,
-  onShowNotifications
+  onShowNotifications,
+  isMobileMenuOpen,
+  onToggleMobileMenu
 }: SidebarProps) {
   const statusColors = {
     online: 'bg-green-500',
@@ -63,7 +67,14 @@ export default function Sidebar({
   ];
 
   return (
-    <div className={`w-20 ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'} border-r flex flex-col items-center py-6 space-y-6`}>
+    <div className={`
+      ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+      fixed lg:relative z-50 lg:z-auto
+      w-20 h-full
+      ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'} 
+      border-r flex flex-col items-center py-6 space-y-6
+      transition-transform duration-300 ease-in-out
+    `}>
       {/* User Avatar with Status */}
       <div className="relative group cursor-pointer">
         <img

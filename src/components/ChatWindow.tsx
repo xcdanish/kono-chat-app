@@ -14,6 +14,7 @@ interface ChatWindowProps {
   colorPalette: string;
   uploadProgress: UploadProgress[];
   setUploadProgress: React.Dispatch<React.SetStateAction<UploadProgress[]>>;
+  onShowGroupManagement: () => void;
 }
 
 export default function ChatWindow({ 
@@ -27,12 +28,15 @@ export default function ChatWindow({
   isDarkMode,
   colorPalette,
   uploadProgress,
-  setUploadProgress
+  setUploadProgress,
+  onShowGroupManagement
 }: ChatWindowProps) {
   const [newMessage, setNewMessage] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [editingMessage, setEditingMessage] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [showFilePreview, setShowFilePreview] = useState(false);
 
   const handleSend = () => {
     if (newMessage.trim()) {
@@ -40,6 +44,69 @@ export default function ChatWindow({
       setNewMessage('');
       setReplyingTo(null);
     }
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length > 0) {
+      setSelectedFiles(files);
+      setShowFilePreview(true);
+    }
+  };
+
+  const handleSendFiles = () => {
+    selectedFiles.forEach((file, index) => {
+      const uploadId = Date.now().toString() + index;
+      const newUpload: UploadProgress = {
+        id: uploadId,
+        fileName: file.name,
+        progress: 0,
+        status: 'uploading'
+      };
+      
+      setUploadProgress(prev => [...prev, newUpload]);
+      
+      // Simulate upload progress
+      const interval = setInterval(() => {
+        setUploadProgress(prev => prev.map(upload => {
+          if (upload.id === uploadId) {
+            const newProgress = Math.min(upload.progress + 10, 100);
+            return {
+              ...upload,
+              progress: newProgress,
+              status: newProgress === 100 ? 'completed' : 'uploading'
+            };
+          }
+          return upload;
+        }));
+      }, 200);
+      
+      setTimeout(() => {
+        clearInterval(interval);
+        setUploadProgress(prev => prev.filter(upload => upload.id !== uploadId));
+        
+        // Add message to chat
+        const fileMessage = `📎 ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+        onSendMessage(fileMessage);
+      }, 3000);
+    });
+    
+    setSelectedFiles([]);
+    setShowFilePreview(false);
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    if (selectedFiles.length === 1) {
+      setShowFilePreview(false);
+    }
+  };
+
+  const getFilePreview = (file: File) => {
+    if (file.type.startsWith('image/')) {
+      return URL.createObjectURL(file);
+    }
+    return null;
   };
 
   const formatTime = (timestamp: string) => {
@@ -114,7 +181,12 @@ export default function ChatWindow({
 
   if (!selectedUser && !selectedGroup) {
     return (
-      <div className={`flex-1 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}>
+      <div className={`
+        flex-1 
+        ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} 
+        flex items-center justify-center
+        ${selectedChatId ? 'flex' : 'hidden lg:flex'}
+      `}>
         <div className="text-center">
           <div className={`w-24 h-24 mx-auto mb-4 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} rounded-full flex items-center justify-center`}>
             <Send className={`w-12 h-12 ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`} />
@@ -153,9 +225,46 @@ export default function ChatWindow({
   const canStartGroupCall = !isGroup || selectedGroup?.members.find(m => m.user.id === currentUserId)?.role === 'admin';
 
   return (
-    <div className={`flex-1 ${isDarkMode ? 'bg-gray-900' : 'bg-white'} flex flex-col`}>
+    <div className={`
+      flex-1 
+      ${isDarkMode ? 'bg-gray-900' : 'bg-white'} 
+      flex flex-col
+      ${selectedChatId ? 'flex' : 'hidden lg:flex'}
+    `}>
+      {/* Mobile Header */}
+      <div className={`lg:hidden p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} flex items-center space-x-3`}>
+        <button
+          onClick={() => window.history.back()}
+          className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'} transition-colors`}
+        >
+          <ArrowLeft className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
+        </button>
+        <div className="flex items-center space-x-3">
+          <div className="relative">
+            {displayAvatar ? (
+              <img
+                src={displayAvatar}
+                alt={displayName}
+                className="w-8 h-8 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                <Users className="w-4 h-4 text-gray-600" />
+              </div>
+            )}
+            {selectedUser && (
+              <div className={`absolute -bottom-1 -right-1 w-3 h-3 ${statusColors[selectedUser.status]} rounded-full border-2 border-white`}></div>
+            )}
+          </div>
+          <div>
+            <h3 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{displayName}</h3>
+            <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{displayStatus}</p>
+          </div>
+        </div>
+      </div>
+
       {/* Chat Header */}
-      <div 
+      <div className={`hidden lg:block p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}
         className={`p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}
         style={{ background: `linear-gradient(to right, ${colors.primary}, ${colors.primary}dd)` }}
       >
@@ -214,7 +323,10 @@ export default function ChatWindow({
             >
               <Video className="w-5 h-5" />
             </button>
-            <button className="p-2 text-white hover:bg-white/20 rounded-lg transition-colors">
+            <button 
+              onClick={isGroup ? onShowGroupManagement : onShowUserProfile}
+              className="p-2 text-white hover:bg-white/20 rounded-lg transition-colors"
+            >
               <MoreVertical className="w-5 h-5" />
             </button>
           </div>
@@ -222,14 +334,26 @@ export default function ChatWindow({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-2 lg:p-4 space-y-4">
         {messages.map((message) => {
           const isOwnMessage = message.senderId === currentUserId;
           const replyToMessage = message.replyTo ? messages.find(m => m.id === message.replyTo) : null;
           
+          // Get sender info for group messages
+          const sender = isGroup && !isOwnMessage 
+            ? selectedGroup?.members.find(m => m.user.id === message.senderId)?.user
+            : null;
+          
           return (
             <div key={message.id} className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-xs lg:max-w-md group relative`}>
+              <div className={`max-w-[85%] lg:max-w-md group relative`}>
+                {/* Group message sender name */}
+                {isGroup && !isOwnMessage && sender && (
+                  <p className={`text-xs mb-1 ml-2 font-medium`} style={{ color: colors.primary }}>
+                    {sender.name}
+                  </p>
+                )}
+                
                 {/* Reply indicator */}
                 {replyToMessage && (
                   <div className={`mb-2 p-2 rounded-lg border-l-4 ${
@@ -343,6 +467,85 @@ export default function ChatWindow({
         ))}
       </div>
 
+      {/* File Preview Modal */}
+      {showFilePreview && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className={`${isDarkMode ? 'bg-gray-900' : 'bg-white'} rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col`}>
+            <div className={`p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} flex items-center justify-between`}>
+              <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                Send {selectedFiles.length} file{selectedFiles.length > 1 ? 's' : ''}
+              </h3>
+              <button
+                onClick={() => setShowFilePreview(false)}
+                className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'} transition-colors`}
+              >
+                <X className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {selectedFiles.map((file, index) => (
+                  <div key={index} className={`relative p-4 border rounded-lg ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'}`}>
+                    <button
+                      onClick={() => removeFile(index)}
+                      className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                    
+                    {file.type.startsWith('image/') ? (
+                      <img
+                        src={getFilePreview(file)!}
+                        alt={file.name}
+                        className="w-full h-32 object-cover rounded-lg mb-2"
+                      />
+                    ) : file.type.startsWith('video/') ? (
+                      <video
+                        src={getFilePreview(file)!}
+                        className="w-full h-32 object-cover rounded-lg mb-2"
+                        controls
+                      />
+                    ) : (
+                      <div className={`w-full h-32 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded-lg mb-2 flex items-center justify-center`}>
+                        <Paperclip className={`w-8 h-8 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
+                      </div>
+                    )}
+                    
+                    <p className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'} truncate`}>
+                      {file.name}
+                    </p>
+                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {(file.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className={`p-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} flex space-x-3`}>
+              <button
+                onClick={() => setShowFilePreview(false)}
+                className={`flex-1 px-4 py-2 rounded-lg border transition-colors ${
+                  isDarkMode
+                    ? 'border-gray-700 text-gray-300 hover:bg-gray-800'
+                    : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSendFiles}
+                className="flex-1 px-4 py-2 rounded-lg text-white font-medium transition-colors"
+                style={{ backgroundColor: colors.primary }}
+              >
+                Send Files
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Reply indicator */}
       {replyingTo && (
         <div className={`px-4 py-2 border-t ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'}`}>
@@ -364,7 +567,7 @@ export default function ChatWindow({
       )}
 
       {/* Message Input */}
-      <div className={`p-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+      <div className={`p-2 lg:p-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
         <div className="relative">
           <div className="flex items-end space-x-3">
             <label className={`p-2 ${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-600 hover:text-gray-800'} transition-colors cursor-pointer`}>
@@ -372,8 +575,9 @@ export default function ChatWindow({
               <input
                 type="file"
                 className="hidden"
-                onChange={handleFileUpload}
+                onChange={handleFileSelect}
                 accept="image/*,video/*,.pdf,.doc,.docx,.txt"
+                multiple
               />
             </label>
             

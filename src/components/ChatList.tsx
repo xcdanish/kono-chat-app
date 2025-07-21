@@ -10,6 +10,7 @@ interface ChatListProps {
   colorPalette: string;
   onShowFriendSearch: () => void;
   onShowGroupCreation: () => void;
+  onCloseMobileMenu: () => void;
 }
 
 export default function ChatList({ 
@@ -19,7 +20,8 @@ export default function ChatList({
   isDarkMode, 
   colorPalette,
   onShowFriendSearch,
-  onShowGroupCreation
+  onShowGroupCreation,
+  onCloseMobileMenu
 }: ChatListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateMenu, setShowCreateMenu] = useState(false);
@@ -61,7 +63,12 @@ export default function ChatList({
   });
 
   return (
-    <div className={`w-80 ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'} border-r flex flex-col`}>
+    <div className={`
+      w-full lg:w-80 
+      ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'} 
+      lg:border-r flex flex-col
+      ${selectedChatId ? 'hidden lg:flex' : 'flex'}
+    `}>
       {/* Header */}
       <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
         <div className="flex items-center justify-between mb-4">
@@ -125,7 +132,10 @@ export default function ChatList({
         {filteredChats.map((chat) => (
           <div
             key={chat.id}
-            onClick={() => onChatSelect(chat.id)}
+            onClick={() => {
+              onChatSelect(chat.id);
+              onCloseMobileMenu();
+            }}
             className={`p-4 border-b ${isDarkMode ? 'border-gray-800' : 'border-gray-100'} cursor-pointer transition-all duration-200 ${
               selectedChatId === chat.id
                 ? 'border-l-4'
