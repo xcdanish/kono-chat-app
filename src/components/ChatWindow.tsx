@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, Paperclip, Smile, Phone, Video, MoreVertical, X, Reply, Edit, Trash2, Check, CheckCheck, Users, Crown } from 'lucide-react';
+import { Send, Paperclip, Smile, Phone, Video, MoreVertical, X, Reply, Edit, Trash2, Check, CheckCheck, Users, Crown, MessageCircle, ArrowLeft } from 'lucide-react';
 import { User, Message, Group, UploadProgress } from '../types';
 
 interface ChatWindowProps {
