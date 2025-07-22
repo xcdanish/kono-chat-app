@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, Paperclip, Smile, Phone, Video, MoreVertical, X, Reply, Edit, Trash2, Check, CheckCheck, Users, Crown, MessageCircle, ArrowLeft } from 'lucide-react';
+import { Send, Paperclip, Smile, Phone, Video, MoreVertical, X, Reply, Edit, Trash2, Check, CheckCheck, Users, Crown, MessageCircle, ArrowLeft, Heart, ThumbsUp, Laugh } from 'lucide-react';
 import { User, Message, Group, UploadProgress } from '../types';
 
 interface ChatWindowProps {
@@ -41,6 +41,7 @@ export default function ChatWindow({
   const [editingMessage, setEditingMessage] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [showFilePreview, setShowFilePreview] = useState(false);
+  const [showReactionPicker, setShowReactionPicker] = useState<string | null>(null);
 
   const handleSend = () => {
     if (newMessage.trim()) {
@@ -118,6 +119,7 @@ export default function ChatWindow({
   };
 
   const emojis = ['😀', '😂', '😍', '👍', '❤️', '😢', '😮', '😡'];
+  const quickReactions = ['👍', '❤️', '😂', '😮', '😢', '😡'];
 
   const getColorPalette = () => {
     const palettes = {
@@ -130,6 +132,12 @@ export default function ChatWindow({
   };
 
   const colors = getColorPalette();
+
+  const handleAddReaction = (messageId: string, emoji: string) => {
+    // This would typically update the message with the reaction
+    console.log(`Adding reaction ${emoji} to message ${messageId}`);
+    setShowReactionPicker(null);
+  };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -349,9 +357,33 @@ export default function ChatWindow({
             : null;
           
           return (
-            <div key={message.id} className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[85%] lg:max-w-md group relative`}>
-                {/* Group message sender name */}
+            <div key={message.id} className={`flex items-end space-x-2 mb-4 ${isOwnMessage ? 'flex-row-reverse space-x-reverse' : ''}`}>
+              {/* Avatar for incoming messages */}
+              {!isOwnMessage && (
+                <div className="flex-shrink-0 mb-1">
+                  {isGroup && sender ? (
+                    <img
+                      src={sender.avatar}
+                      alt={sender.name}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  ) : selectedUser ? (
+                    <img
+                      src={selectedUser.avatar}
+                      alt={selectedUser.name}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                      <Users className="w-4 h-4 text-gray-600" />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Message bubble */}
+              <div className={`max-w-[75%] lg:max-w-md group relative`}>
+                {/* Sender name for group messages */}
                 {isGroup && !isOwnMessage && sender && (
                   <p className={`text-xs mb-1 ml-3 font-medium`} style={{ color: colors.primary }}>
                     {sender.name}
@@ -360,7 +392,7 @@ export default function ChatWindow({
                 
                 {/* Reply indicator */}
                 {replyToMessage && (
-                  <div className={`mb-2 p-2 rounded-lg border-l-4 ${
+                  <div className={`mb-2 ml-3 mr-3 p-2 rounded-lg border-l-4 ${
                     isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-gray-100 border-gray-300'
                   }`}>
                     <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -372,75 +404,138 @@ export default function ChatWindow({
                   </div>
                 )}
                 
-                <div className={`px-4 py-2 rounded-2xl ${
+                {/* Message bubble */}
+                <div className={`relative px-4 py-3 rounded-2xl shadow-sm ${
                   isOwnMessage
-                    ? 'text-white rounded-br-md'
-                    : isDarkMode
-                    ? 'bg-gray-700 text-white rounded-bl-md'
-                    : 'bg-gray-100 text-gray-900 rounded-bl-md'
+                    ? `text-white ${isGroup ? 'rounded-br-md' : 'rounded-br-md'}`
+                    : `${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-900 border border-gray-200'} ${isGroup ? 'rounded-bl-md' : 'rounded-bl-md'}`
                 }`}
                 style={isOwnMessage ? { backgroundColor: colors.primary } : {}}>
+                  
+                  {/* File attachment */}
                   {message.type === 'file' && (
-                    <div className="flex items-center space-x-2 mb-2">
+                    <div className="flex items-center space-x-2 mb-2 p-2 bg-black/10 rounded-lg">
                       <Paperclip className="w-4 h-4" />
-                      <span className="text-sm">{message.fileName}</span>
-                      <span className="text-xs opacity-70">{message.fileSize}</span>
+                      <div className="flex-1">
+                        <span className="text-sm font-medium">{message.fileName}</span>
+                        <span className="text-xs opacity-70 ml-2">{message.fileSize}</span>
+                      </div>
                     </div>
                   )}
-                  <p className="text-sm lg:text-base">{message.content}</p>
-                  <div className="flex items-center justify-between mt-1">
-                    <p className={`text-xs ${isOwnMessage ? 'text-white opacity-70' : isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  
+                  {/* Message content */}
+                  <p className="text-sm lg:text-base leading-relaxed">{message.content}</p>
+                  
+                  {/* Message footer */}
+                  <div className="flex items-center justify-between mt-2 space-x-2">
+                    <p className={`text-xs ${isOwnMessage ? 'text-white/70' : isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                       {formatTime(message.timestamp)}
-                      {message.editedAt && ' (edited)'}
+                      {message.editedAt && ' • edited'}
                     </p>
                     {isOwnMessage && (
-                      <div className="ml-2">
+                      <div className="flex items-center space-x-1">
                         {getMessageStatusIcon(message.status)}
                       </div>
                     )}
                   </div>
                   
-                  {message.reactions && message.reactions.length > 0 && (
-                    <div className="flex space-x-1 mt-2">
-                      {message.reactions.map((reaction, index) => (
-                        <span key={index} className="text-xs bg-white/20 rounded-full px-2 py-1">
-                          {reaction.emoji} {reaction.users.length}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  {/* Message tail */}
+                  <div className={`absolute bottom-0 ${isOwnMessage ? '-right-2' : '-left-2'} w-0 h-0 border-l-8 border-r-8 border-t-8 ${
+                    isOwnMessage 
+                      ? 'border-l-transparent border-r-transparent'
+                      : 'border-l-transparent border-r-transparent'
+                  }`}
+                  style={isOwnMessage ? { 
+                    borderTopColor: colors.primary,
+                    transform: 'rotate(45deg)'
+                  } : {
+                    borderTopColor: isDarkMode ? '#374151' : '#ffffff',
+                    transform: 'rotate(-45deg)'
+                  }}></div>
                 </div>
                 
-                {/* Message actions */}
-                <div className={`absolute ${isOwnMessage ? 'left-0' : 'right-0'} top-0 opacity-0 group-hover:opacity-100 transition-opacity`}>
-                  <div className={`flex space-x-1 p-1 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                {/* Reactions */}
+                {message.reactions && message.reactions.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2 ml-3">
+                    {message.reactions.map((reaction, index) => (
+                      <button
+                        key={index}
+                        className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs transition-colors ${
+                          isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'
+                        }`}
+                      >
+                        <span>{reaction.emoji}</span>
+                        <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                          {reaction.users.length}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Quick reaction picker */}
+                {showReactionPicker === message.id && (
+                  <div className={`absolute ${isOwnMessage ? 'right-0' : 'left-0'} -top-12 flex space-x-1 p-2 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} z-10`}>
+                    {quickReactions.map((emoji) => (
+                      <button
+                        key={emoji}
+                        onClick={() => handleAddReaction(message.id, emoji)}
+                        className={`text-lg hover:scale-110 transition-transform p-1 rounded ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Message actions on hover */}
+                <div className={`absolute ${isOwnMessage ? 'left-0 -ml-20' : 'right-0 -mr-20'} top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200`}>
+                  <div className={`flex items-center space-x-1 p-1 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                    <button
+                      onClick={() => setShowReactionPicker(showReactionPicker === message.id ? null : message.id)}
+                      className={`p-2 rounded-full ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}
+                      title="Add reaction"
+                    >
+                      <Smile className={`w-4 h-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
+                    </button>
                     <button
                       onClick={() => setReplyingTo(message)}
-                      className={`p-1 rounded ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}
+                      className={`p-2 rounded-full ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}
                       title="Reply"
                     >
-                      <Reply className={`w-3 h-3 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
+                      <Reply className={`w-4 h-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
                     </button>
                     {isOwnMessage && (
                       <>
                         <button
                           onClick={() => setEditingMessage(message.id)}
-                          className={`p-1 rounded ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}
+                          className={`p-2 rounded-full ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}
                           title="Edit"
                         >
-                          <Edit className={`w-3 h-3 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
+                          <Edit className={`w-4 h-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
                         </button>
                         <button
-                          className={`p-1 rounded ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}
+                          className={`p-2 rounded-full ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}
                           title="Delete"
                         >
-                          <Trash2 className="w-3 h-3 text-red-500" />
+                          <Trash2 className="w-4 h-4 text-red-500" />
                         </button>
                       </>
                     )}
                   </div>
                 </div>
               </div>
+
+              {/* Avatar for outgoing messages (optional, like WhatsApp) */}
+              {isOwnMessage && (
+                <div className="flex-shrink-0 mb-1">
+                  <img
+                    src={currentUser.avatar}
+                    alt="You"
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                </div>
+              )}
             </div>
           );
         })}
