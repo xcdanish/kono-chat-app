@@ -15,8 +15,46 @@ import NotificationPanel from './components/NotificationPanel';
 import CallHistory from './components/CallHistory';
 import GroupCreation from './components/GroupCreation';
 import GroupManagement from './components/GroupManagement';
-import { MessageCircle } from 'lucide-react';
+import { MessageCircle, Phone, Users, Bell, Settings, Sun, Moon, LogOut } from 'lucide-react';
 import { User, Chat, Message, CallState, AuthState, AppSettings, FriendRequest, Friend, Group, Notification, CallHistory as CallHistoryType, UploadProgress } from './types';
+
+// Color palette configuration
+const colorPalettes = {
+  blue: {
+    primary: '#3B82F6',
+    light: '#EFF6FF',
+    dark: '#1E40AF'
+  },
+  green: {
+    primary: '#10B981',
+    light: '#ECFDF5',
+    dark: '#047857'
+  },
+  purple: {
+    primary: '#8B5CF6',
+    light: '#F3E8FF',
+    dark: '#5B21B6'
+  },
+  pink: {
+    primary: '#EC4899',
+    light: '#FDF2F8',
+    dark: '#BE185D'
+  }
+};
+
+const statusColors = {
+  online: 'bg-green-500',
+  away: 'bg-yellow-500',
+  busy: 'bg-red-500',
+  offline: 'bg-gray-400'
+};
+
+const statusLabels = {
+  online: 'Online',
+  away: 'Away',
+  busy: 'Busy',
+  offline: 'Offline'
+};
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -43,6 +81,7 @@ function App() {
   });
   
   const isDarkMode = settings.theme === 'dark';
+  const colors = colorPalettes[settings.colorPalette];
   const [activeView, setActiveView] = useState('chats');
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [showUserProfile, setShowUserProfile] = useState(false);
@@ -698,7 +737,7 @@ function App() {
                 <button
                   key={item.id}
                   onClick={() => {
-                    onViewChange(item.id);
+                    setActiveView(item.id);
                     setIsMobileMenuOpen(false);
                   }}
                   className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-colors ${
@@ -825,54 +864,6 @@ function App() {
               </div>
             </div>
           </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-export default App;
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                (selectedUser || selectedGroup) && (
-                  <ProfilePanel
-                    user={selectedUser}
-                    group={selectedGroup}
-                    currentUser={currentUser}
-                    onBack={() => setShowProfilePanel(false)}
-                    onStartCall={handleStartCall}
-                    isDarkMode={isDarkMode}
-                    colorPalette={settings.colorPalette}
-                    onShowGroupManagement={() => setShowGroupCreation(true)}
-                  />
-                )
-              )}
-            </>
-          )}
-          
-          {activeView === 'calls' && (
-            <CallHistory
-              callHistory={callHistory}
-              isDarkMode={isDarkMode}
-              colorPalette={settings.colorPalette}
-            />
-          )}
-          
-          {activeView !== 'chats' && activeView !== 'calls' && (
-            <div className={`flex-1 ${isDarkMode ? 'bg-gray-900' : 'bg-white'} flex items-center justify-center`}>
-              <div className="text-center">
-                <h3 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
-                  {activeView.charAt(0).toUpperCase() + activeView.slice(1)}
-                </h3>
-                <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  This feature is coming soon
-                </p>
-              </div>
-            </div>
-          )}
           
           <VideoCall
             callState={callState}
