@@ -182,10 +182,9 @@ export default function ChatWindow({
   if (!selectedUser && !selectedGroup) {
     return (
       <div className={`
-        flex-1 
+        flex-1 hidden lg:flex
         ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} 
-        flex items-center justify-center
-        ${selectedChatId ? 'flex' : 'hidden lg:flex'}
+        items-center justify-center
       `}>
         <div className="text-center">
           <div className={`w-24 h-24 mx-auto mb-4 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} rounded-full flex items-center justify-center`}>
@@ -227,17 +226,20 @@ export default function ChatWindow({
   return (
     <div className={`
       flex-1 
+      ${selectedUser || selectedGroup ? 'flex' : 'hidden lg:flex'}
       ${isDarkMode ? 'bg-gray-900' : 'bg-white'} 
-      flex flex-col
-      ${selectedChatId ? 'flex' : 'hidden lg:flex'}
+      flex-col
     `}>
       {/* Mobile Header */}
       <div className={`lg:hidden p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} flex items-center space-x-3`}>
         <button
-          onClick={() => window.history.back()}
+          onClick={() => {
+            // Clear selected chat to go back to chat list on mobile
+            window.dispatchEvent(new CustomEvent('clearSelectedChat'));
+          }}
           className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'} transition-colors`}
         >
-          <ArrowLeft className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
+          <X className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
         </button>
         <div className="flex items-center space-x-3">
           <div className="relative">
@@ -264,7 +266,7 @@ export default function ChatWindow({
       </div>
 
       {/* Chat Header */}
-      <div className={`hidden lg:block p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}
+      <div 
         className={`p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}
         style={{ background: `linear-gradient(to right, ${colors.primary}, ${colors.primary}dd)` }}
       >
@@ -286,7 +288,7 @@ export default function ChatWindow({
                 </div>
               )}
               {selectedUser && (
-                <div className={`absolute -bottom-1 -right-1 w-3 h-3 ${statusColors[selectedUser.status]} rounded-full border-2 border-white`}></div>
+                <div className={`absolute -bottom-1 -right-1 w-3 h-3 ${statusColors[selectedUser.status]} rounded-full border-2 ${isDarkMode ? 'border-gray-900' : 'border-white'}`}></div>
               )}
             </div>
             <div>
@@ -294,7 +296,7 @@ export default function ChatWindow({
                 <h3 className="font-semibold text-white">{displayName}</h3>
                 {isGroup && <Users className="w-4 h-4 text-blue-100" />}
               </div>
-              <p className="text-sm text-blue-100">{displayStatus}</p>
+              <p className="text-sm text-blue-100 truncate">{displayStatus}</p>
             </div>
           </div>
           
@@ -334,7 +336,7 @@ export default function ChatWindow({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-2 lg:p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => {
           const isOwnMessage = message.senderId === currentUserId;
           const replyToMessage = message.replyTo ? messages.find(m => m.id === message.replyTo) : null;
@@ -346,7 +348,7 @@ export default function ChatWindow({
           
           return (
             <div key={message.id} className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[85%] lg:max-w-md group relative`}>
+              <div className={`max-w-[85%] sm:max-w-md group relative`}>
                 {/* Group message sender name */}
                 {isGroup && !isOwnMessage && sender && (
                   <p className={`text-xs mb-1 ml-2 font-medium`} style={{ color: colors.primary }}>
@@ -370,10 +372,10 @@ export default function ChatWindow({
                 
                 <div className={`px-4 py-2 rounded-2xl ${
                   isOwnMessage
-                    ? 'text-white'
+                    ? 'text-white rounded-br-md'
                     : isDarkMode
-                    ? 'bg-gray-700 text-white'
-                    : 'bg-gray-100 text-gray-900'
+                    ? 'bg-gray-700 text-white rounded-bl-md'
+                    : 'bg-gray-100 text-gray-900 rounded-bl-md'
                 }`}
                 style={isOwnMessage ? { backgroundColor: colors.primary } : {}}>
                   {message.type === 'file' && (
@@ -567,7 +569,7 @@ export default function ChatWindow({
       )}
 
       {/* Message Input */}
-      <div className={`p-2 lg:p-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+      <div className={`p-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} safe-area-inset-bottom`}>
         <div className="relative">
           <div className="flex items-end space-x-3">
             <label className={`p-2 ${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-600 hover:text-gray-800'} transition-colors cursor-pointer`}>
@@ -588,7 +590,7 @@ export default function ChatWindow({
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSend()}
                 placeholder="Type a message..."
-                className={`w-full px-4 py-3 pr-12 rounded-xl border ${
+                className={`w-full px-4 py-3 pr-12 rounded-2xl border ${
                   isDarkMode
                     ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:bg-gray-700'
                     : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400'
@@ -624,7 +626,7 @@ export default function ChatWindow({
             <button
               onClick={handleSend}
               disabled={!newMessage.trim()}
-              className="disabled:bg-gray-300 disabled:cursor-not-allowed text-white p-3 rounded-xl transition-colors"
+              className="disabled:bg-gray-300 disabled:cursor-not-allowed text-white p-3 rounded-full transition-colors"
               style={{ 
                 backgroundColor: !newMessage.trim() ? '#9CA3AF' : colors.primary
               }}

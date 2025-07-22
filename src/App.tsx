@@ -14,6 +14,8 @@ import FriendSearch from './components/FriendSearch';
 import NotificationPanel from './components/NotificationPanel';
 import CallHistory from './components/CallHistory';
 import GroupCreation from './components/GroupCreation';
+import GroupManagement from './components/GroupManagement';
+import { MessageCircle } from 'lucide-react';
 import { User, Chat, Message, CallState, AuthState, AppSettings, FriendRequest, Friend, Group, Notification, CallHistory as CallHistoryType, UploadProgress } from './types';
 
 function App() {
@@ -30,7 +32,6 @@ function App() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showCallHistory, setShowCallHistory] = useState(false);
   const [showGroupCreation, setShowGroupCreation] = useState(false);
-  const [showGroupManagement, setShowGroupManagement] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // Default to dark mode
@@ -349,8 +350,8 @@ function App() {
     ? chats.find(chat => chat.id === selectedChatId)
     : null;
 
-  const selectedUser = selectedChat?.user;
-  const selectedGroup = selectedChat?.group;
+  const selectedUser = selectedChat && !selectedChat.isGroup ? selectedChat.user : undefined;
+  const selectedGroup = selectedChat && selectedChat.isGroup ? selectedChat.group : undefined;
 
   const handleSendMessage = (content: string, replyTo?: string) => {
     if (!selectedChatId) return;
@@ -630,20 +631,36 @@ function App() {
                     onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
                   />
                   
-                  <ChatWindow
-                    selectedUser={selectedUser}
-                    selectedGroup={selectedGroup}
-                    messages={selectedChatId ? messages[selectedChatId] || [] : []}
-                    currentUserId={currentUser.id}
-                    onSendMessage={handleSendMessage}
-                    onStartCall={handleStartCall}
-                    onShowUserProfile={() => setShowProfilePanel(true)}
-                    isDarkMode={isDarkMode}
-                    colorPalette={settings.colorPalette}
-                    uploadProgress={uploadProgress}
-                    setUploadProgress={setUploadProgress}
-                    onShowGroupManagement={() => setShowGroupManagement(true)}
-                  />
+                  {selectedChatId ? (
+                    <ChatWindow
+                      selectedUser={selectedUser}
+                      selectedGroup={selectedGroup}
+                      messages={messages[selectedChatId] || []}
+                      currentUserId={currentUser.id}
+                      onSendMessage={handleSendMessage}
+                      onStartCall={handleStartCall}
+                      onShowUserProfile={() => setShowProfilePanel(true)}
+                      isDarkMode={isDarkMode}
+                      colorPalette={settings.colorPalette}
+                      uploadProgress={uploadProgress}
+                      setUploadProgress={setUploadProgress}
+                      onShowGroupManagement={() => setShowGroupCreation(true)}
+                    />
+                  ) : (
+                    <div className={`flex-1 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}>
+                      <div className="text-center p-8">
+                        <div className={`w-24 h-24 mx-auto mb-4 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} rounded-full flex items-center justify-center`}>
+                          <MessageCircle className={`w-12 h-12 ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`} />
+                        </div>
+                        <h3 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
+                          Welcome to KoNo
+                        </h3>
+                        <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          Select a conversation to start messaging
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 (selectedUser || selectedGroup) && (
@@ -655,7 +672,7 @@ function App() {
                     onStartCall={handleStartCall}
                     isDarkMode={isDarkMode}
                     colorPalette={settings.colorPalette}
-                    onShowGroupManagement={() => setShowGroupManagement(true)}
+                    onShowGroupManagement={() => setShowGroupCreation(true)}
                   />
                 )
               )}
@@ -740,18 +757,6 @@ function App() {
             colorPalette={settings.colorPalette}
           />
           
-          <GroupManagement
-            isVisible={showGroupManagement}
-            onClose={() => setShowGroupManagement(false)}
-            group={selectedGroup}
-            friends={friends}
-            currentUser={currentUser}
-            onAddMember={handleAddGroupMember}
-            onRemoveMember={handleRemoveGroupMember}
-            isDarkMode={isDarkMode}
-            colorPalette={settings.colorPalette}
-          />
-          
           {(selectedUser || selectedGroup) && (
             <UserProfile
               user={selectedUser}
@@ -761,6 +766,18 @@ function App() {
               isDarkMode={isDarkMode}
             />
           )}
+          
+          <GroupManagement
+            isVisible={showGroupCreation}
+            onClose={() => setShowGroupCreation(false)}
+            group={selectedGroup}
+            friends={friends}
+            currentUser={currentUser}
+            onAddMember={handleAddGroupMember}
+            onRemoveMember={handleRemoveGroupMember}
+            isDarkMode={isDarkMode}
+            colorPalette={settings.colorPalette}
+          />
         </>
       )}
     </div>

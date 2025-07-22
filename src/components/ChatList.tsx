@@ -62,12 +62,22 @@ export default function ChatList({
     return name.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
+  // Listen for mobile back navigation
+  React.useEffect(() => {
+    const handleClearSelectedChat = () => {
+      onChatSelect('');
+    };
+    
+    window.addEventListener('clearSelectedChat', handleClearSelectedChat);
+    return () => window.removeEventListener('clearSelectedChat', handleClearSelectedChat);
+  }, [onChatSelect]);
+
   return (
     <div className={`
-      w-full lg:w-80 
+      w-full lg:w-80 lg:min-w-80
       ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'} 
       lg:border-r flex flex-col
-      ${selectedChatId ? 'hidden lg:flex' : 'flex'}
+      ${selectedChatId && selectedChatId !== '' ? 'hidden lg:flex' : 'flex'}
     `}>
       {/* Header */}
       <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
@@ -136,7 +146,7 @@ export default function ChatList({
               onChatSelect(chat.id);
               onCloseMobileMenu();
             }}
-            className={`p-4 border-b ${isDarkMode ? 'border-gray-800' : 'border-gray-100'} cursor-pointer transition-all duration-200 ${
+            className={`p-4 border-b ${isDarkMode ? 'border-gray-800' : 'border-gray-100'} cursor-pointer transition-all duration-200 active:bg-opacity-50 ${
               selectedChatId === chat.id
                 ? 'border-l-4'
                 : isDarkMode
@@ -169,7 +179,7 @@ export default function ChatList({
                       alt={chat.user!.name}
                       className="w-12 h-12 rounded-full object-cover"
                     />
-                    <div className={`absolute -bottom-1 -right-1 w-4 h-4 ${statusColors[chat.user!.status]} rounded-full border-2 ${isDarkMode ? 'border-gray-900' : 'border-white'}`}></div>
+                    <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 ${statusColors[chat.user!.status]} rounded-full border-2 ${isDarkMode ? 'border-gray-900' : 'border-white'}`}></div>
                   </>
                 )}
               </div>
@@ -177,27 +187,27 @@ export default function ChatList({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center space-x-2">
-                    <h3 className={`font-semibold truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    <h3 className={`font-semibold truncate text-sm sm:text-base ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                       {chat.user?.name || chat.group?.name}
                     </h3>
                     {chat.isGroup && (
-                      <Users className={`w-4 h-4 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
+                      <Users className={`w-3.5 h-3.5 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
                     )}
                   </div>
-                  <span className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                  <span className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'} whitespace-nowrap`}>
                     {formatTime(chat.timestamp)}
                   </span>
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <p className={`text-sm truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} ${chat.isTyping ? 'italic' : ''}`}
+                  <p className={`text-xs sm:text-sm truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} ${chat.isTyping ? 'italic' : ''}`}
                      style={chat.isTyping ? { color: colors.primary } : {}}>
                     {chat.isTyping ? 'Typing...' : chat.lastMessage}
                   </p>
                   
                   {chat.unreadCount > 0 && (
                     <span 
-                      className="text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center"
+                      className="text-white text-xs rounded-full px-2 py-0.5 min-w-[18px] text-center flex-shrink-0 ml-2"
                       style={{ backgroundColor: colors.primary }}
                     >
                       {chat.unreadCount > 99 ? '99+' : chat.unreadCount}

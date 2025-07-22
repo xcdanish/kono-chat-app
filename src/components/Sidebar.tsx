@@ -70,9 +70,9 @@ export default function Sidebar({
     <div className={`
       ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       fixed lg:relative z-50 lg:z-auto
-      w-20 h-full
+      w-16 sm:w-20 h-full
       ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'} 
-      border-r flex flex-col items-center py-6 space-y-6
+      border-r flex flex-col items-center py-4 sm:py-6 space-y-4 sm:space-y-6
       transition-transform duration-300 ease-in-out
     `}>
       {/* User Avatar with Status */}
@@ -80,15 +80,15 @@ export default function Sidebar({
         <img
           src={currentUser.avatar}
           alt={currentUser.name}
-          className="w-12 h-12 rounded-xl object-cover ring-3 cursor-pointer transition-transform hover:scale-105"
+          className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover ring-2 sm:ring-3 cursor-pointer transition-transform hover:scale-105"
           style={{ ringColor: colors.primary }}
         />
-        <div className={`absolute -bottom-1 -right-1 w-5 h-5 ${statusColors[currentUser.status]} rounded-full border-2 ${isDarkMode ? 'border-gray-900' : 'border-white'} flex items-center justify-center`}>
-          <ChevronDown className="w-2 h-2 text-white" />
+        <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 sm:w-5 sm:h-5 ${statusColors[currentUser.status]} rounded-full border-2 ${isDarkMode ? 'border-gray-900' : 'border-white'} flex items-center justify-center`}>
+          <ChevronDown className="w-1.5 h-1.5 sm:w-2 sm:h-2 text-white" />
         </div>
         
         {/* Status Dropdown */}
-        <div className={`absolute left-full ml-2 top-0 ${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'} rounded-xl shadow-xl border py-3 min-w-52 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50`}>
+        <div className={`absolute left-full ml-2 top-0 ${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'} rounded-xl shadow-xl border py-3 min-w-48 sm:min-w-52 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50`}>
           <div className={`px-4 py-2 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} mb-2`}>
             <p className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{currentUser.name}</p>
             <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Set your status</p>
@@ -111,12 +111,12 @@ export default function Sidebar({
       </div>
 
       {/* Navigation Menu */}
-      <nav className="flex-1 flex flex-col space-y-2">
+      <nav className="flex-1 flex flex-col space-y-1 sm:space-y-2">
         {menuItems.map((item) => (
           <button
             key={item.id}
             onClick={() => onViewChange(item.id)}
-            className={`p-3 rounded-xl transition-all duration-200 relative group ${
+            className={`p-2 sm:p-3 rounded-xl transition-all duration-200 relative group ${
               activeView === item.id
                 ? 'text-white shadow-lg'
                 : isDarkMode
@@ -125,7 +125,7 @@ export default function Sidebar({
             }`}
             style={activeView === item.id ? { backgroundColor: colors.primary } : {}}
           >
-            <item.icon className="w-6 h-6" />
+            <item.icon className="w-5 h-5 sm:w-6 sm:h-6" />
             
             {/* Tooltip */}
             <div className={`absolute left-full ml-2 px-2 py-1 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-900'} text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50`}>
@@ -138,16 +138,16 @@ export default function Sidebar({
       {/* Notifications Button */}
       <button
         onClick={onShowNotifications}
-        className={`p-3 rounded-xl transition-all duration-200 relative ${
+        className={`p-2 sm:p-3 rounded-xl transition-all duration-200 relative ${
           isDarkMode
             ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
             : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
         }`}
       >
-        <Bell className="w-6 h-6" />
+        <Bell className="w-5 h-5 sm:w-6 sm:h-6" />
         {unreadNotificationCount > 0 && (
           <span 
-            className="absolute -top-1 -right-1 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center"
+            className="absolute -top-0.5 -right-0.5 text-white text-xs rounded-full px-1 sm:px-1.5 py-0.5 min-w-[16px] sm:min-w-[18px] text-center"
             style={{ backgroundColor: colors.primary }}
           >
             {unreadNotificationCount > 99 ? '99+' : unreadNotificationCount}
@@ -158,25 +158,25 @@ export default function Sidebar({
       {/* Settings Button */}
       <button
         onClick={onShowSettings}
-        className={`p-3 rounded-xl transition-all duration-200 ${
+        className={`p-2 sm:p-3 rounded-xl transition-all duration-200 ${
           isDarkMode
             ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
             : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
         }`}
       >
-        <Settings className="w-6 h-6" />
+        <Settings className="w-5 h-5 sm:w-6 sm:h-6" />
       </button>
 
       {/* Logout Button */}
       <button
         onClick={onLogout}
-        className={`p-3 rounded-xl transition-all duration-200 ${
+        className={`p-2 sm:p-3 rounded-xl transition-all duration-200 ${
           isDarkMode
             ? 'text-gray-400 hover:text-red-400 hover:bg-gray-800'
             : 'text-gray-600 hover:text-red-600 hover:bg-red-50'
         }`}
       >
-        <LogOut className="w-6 h-6" />
+        <LogOut className="w-5 h-5 sm:w-6 sm:h-6" />
       </button>
     </div>
   );
