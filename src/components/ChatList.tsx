@@ -74,15 +74,15 @@ export default function ChatList({
 
   return (
     <div className={`
-      w-full lg:w-80 lg:min-w-80
+      w-full lg:w-80 xl:w-96 lg:min-w-80 xl:min-w-96
       ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'} 
       lg:border-r flex flex-col
-      ${selectedChatId && selectedChatId !== '' ? 'hidden lg:flex' : 'flex'}
+      ${selectedChatId ? 'hidden lg:flex' : 'flex'}
     `}>
       {/* Header */}
-      <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+      <div className={`p-4 lg:p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Chats</h2>
+          <h2 className={`text-xl lg:text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Chats</h2>
           <div className="relative">
             <button 
               onClick={() => setShowCreateMenu(!showCreateMenu)}
@@ -127,7 +127,7 @@ export default function ChatList({
             placeholder="Search conversations..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className={`w-full pl-10 pr-4 py-2 rounded-lg border ${
+            className={`w-full pl-10 pr-4 py-2.5 lg:py-2 rounded-lg border ${
               isDarkMode 
                 ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:bg-gray-700' 
                 : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400'
@@ -138,7 +138,7 @@ export default function ChatList({
       </div>
 
       {/* Chat List */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto pb-16 lg:pb-0">
         {filteredChats.map((chat) => (
           <div
             key={chat.id}
@@ -146,7 +146,7 @@ export default function ChatList({
               onChatSelect(chat.id);
               onCloseMobileMenu();
             }}
-            className={`p-4 border-b ${isDarkMode ? 'border-gray-800' : 'border-gray-100'} cursor-pointer transition-all duration-200 active:bg-opacity-50 ${
+            className={`p-3 lg:p-4 border-b ${isDarkMode ? 'border-gray-800' : 'border-gray-100'} cursor-pointer transition-all duration-200 active:scale-[0.98] ${
               selectedChatId === chat.id
                 ? 'border-l-4'
                 : isDarkMode
@@ -161,15 +161,15 @@ export default function ChatList({
             <div className="flex items-center space-x-3">
               <div className="relative">
                 {chat.isGroup ? (
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                  <div className={`w-11 h-11 lg:w-12 lg:h-12 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
                     {chat.group?.avatar ? (
                       <img
                         src={chat.group.avatar}
                         alt={chat.group.name}
-                        className="w-12 h-12 rounded-full object-cover"
+                        className="w-11 h-11 lg:w-12 lg:h-12 rounded-full object-cover"
                       />
                     ) : (
-                      <Users className={`w-6 h-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
+                      <Users className={`w-5 h-5 lg:w-6 lg:h-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
                     )}
                   </div>
                 ) : (
@@ -177,9 +177,9 @@ export default function ChatList({
                     <img
                       src={chat.user!.avatar}
                       alt={chat.user!.name}
-                      className="w-12 h-12 rounded-full object-cover"
+                      className="w-11 h-11 lg:w-12 lg:h-12 rounded-full object-cover"
                     />
-                    <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 ${statusColors[chat.user!.status]} rounded-full border-2 ${isDarkMode ? 'border-gray-900' : 'border-white'}`}></div>
+                    <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 lg:w-3.5 lg:h-3.5 ${statusColors[chat.user!.status]} rounded-full border-2 ${isDarkMode ? 'border-gray-900' : 'border-white'}`}></div>
                   </>
                 )}
               </div>
@@ -187,27 +187,27 @@ export default function ChatList({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center space-x-2">
-                    <h3 className={`font-semibold truncate text-sm sm:text-base ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    <h3 className={`font-semibold truncate text-sm lg:text-base ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                       {chat.user?.name || chat.group?.name}
                     </h3>
                     {chat.isGroup && (
-                      <Users className={`w-3.5 h-3.5 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
+                      <Users className={`w-3 h-3 lg:w-3.5 lg:h-3.5 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} flex-shrink-0`} />
                     )}
                   </div>
-                  <span className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'} whitespace-nowrap`}>
+                  <span className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'} whitespace-nowrap flex-shrink-0`}>
                     {formatTime(chat.timestamp)}
                   </span>
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <p className={`text-xs sm:text-sm truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} ${chat.isTyping ? 'italic' : ''}`}
+                  <p className={`text-xs lg:text-sm truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} ${chat.isTyping ? 'italic' : ''} flex-1 mr-2`}
                      style={chat.isTyping ? { color: colors.primary } : {}}>
                     {chat.isTyping ? 'Typing...' : chat.lastMessage}
                   </p>
                   
                   {chat.unreadCount > 0 && (
                     <span 
-                      className="text-white text-xs rounded-full px-2 py-0.5 min-w-[18px] text-center flex-shrink-0 ml-2"
+                      className="text-white text-xs rounded-full px-2 py-0.5 min-w-[18px] text-center flex-shrink-0"
                       style={{ backgroundColor: colors.primary }}
                     >
                       {chat.unreadCount > 99 ? '99+' : chat.unreadCount}

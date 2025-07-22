@@ -6,11 +6,17 @@
   html {
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
   }
   
   body {
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
+  }
+  
+  * {
+    box-sizing: border-box;
   }
 }
 
@@ -21,5 +27,22 @@
   
   .safe-area-inset-top {
     padding-top: env(safe-area-inset-top);
+  }
+  
+  /* Prevent horizontal scrolling */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Mobile touch improvements */
+  @media (max-width: 1024px) {
+    .touch-manipulation {
+      touch-action: manipulation;
+    }
   }
 }

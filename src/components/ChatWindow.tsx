@@ -15,6 +15,8 @@ interface ChatWindowProps {
   uploadProgress: UploadProgress[];
   setUploadProgress: React.Dispatch<React.SetStateAction<UploadProgress[]>>;
   onShowGroupManagement: () => void;
+  selectedChatId: string | null;
+  onClearSelection: () => void;
 }
 
 export default function ChatWindow({ 
@@ -29,7 +31,9 @@ export default function ChatWindow({
   colorPalette,
   uploadProgress,
   setUploadProgress,
-  onShowGroupManagement
+  onShowGroupManagement,
+  selectedChatId,
+  onClearSelection
 }: ChatWindowProps) {
   const [newMessage, setNewMessage] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -182,18 +186,18 @@ export default function ChatWindow({
   if (!selectedUser && !selectedGroup) {
     return (
       <div className={`
-        flex-1 hidden lg:flex
+        flex-1 ${selectedChatId ? 'flex' : 'hidden lg:flex'}
         ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} 
         items-center justify-center
       `}>
-        <div className="text-center">
-          <div className={`w-24 h-24 mx-auto mb-4 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} rounded-full flex items-center justify-center`}>
-            <Send className={`w-12 h-12 ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`} />
+        <div className="text-center p-4">
+          <div className={`w-16 h-16 lg:w-24 lg:h-24 mx-auto mb-4 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} rounded-full flex items-center justify-center`}>
+            <MessageCircle className={`w-8 h-8 lg:w-12 lg:h-12 ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`} />
           </div>
-          <h3 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
+          <h3 className={`text-lg lg:text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
             Welcome to KoNo
           </h3>
-          <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+          <p className={`text-sm lg:text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             Select a conversation to start messaging
           </p>
         </div>
@@ -226,20 +230,18 @@ export default function ChatWindow({
   return (
     <div className={`
       flex-1 
-      ${selectedUser || selectedGroup ? 'flex' : 'hidden lg:flex'}
+      ${selectedChatId ? 'flex' : 'hidden lg:flex'}
       ${isDarkMode ? 'bg-gray-900' : 'bg-white'} 
       flex-col
+      min-w-0
     `}>
-      {/* Mobile Header */}
-      <div className={`lg:hidden p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} flex items-center space-x-3`}>
+      {/* Mobile Back Header */}
+      <div className={`lg:hidden p-3 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} flex items-center space-x-3`}>
         <button
-          onClick={() => {
-            // Clear selected chat to go back to chat list on mobile
-            window.dispatchEvent(new CustomEvent('clearSelectedChat'));
-          }}
+          onClick={onClearSelection}
           className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'} transition-colors`}
         >
-          <X className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
+          <ArrowLeft className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
         </button>
         <div className="flex items-center space-x-3">
           <div className="relative">
@@ -247,19 +249,19 @@ export default function ChatWindow({
               <img
                 src={displayAvatar}
                 alt={displayName}
-                className="w-8 h-8 rounded-full object-cover"
+                className="w-9 h-9 rounded-full object-cover"
               />
             ) : (
-              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+              <div className="w-9 h-9 bg-gray-300 rounded-full flex items-center justify-center">
                 <Users className="w-4 h-4 text-gray-600" />
               </div>
             )}
             {selectedUser && (
-              <div className={`absolute -bottom-1 -right-1 w-3 h-3 ${statusColors[selectedUser.status]} rounded-full border-2 border-white`}></div>
+              <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${statusColors[selectedUser.status]} rounded-full border-2 ${isDarkMode ? 'border-gray-900' : 'border-white'}`}></div>
             )}
           </div>
           <div>
-            <h3 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{displayName}</h3>
+            <h3 className={`font-semibold text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{displayName}</h3>
             <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{displayStatus}</p>
           </div>
         </div>
@@ -267,7 +269,7 @@ export default function ChatWindow({
 
       {/* Chat Header */}
       <div 
-        className={`p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}
+        className={`hidden lg:block p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}
         style={{ background: `linear-gradient(to right, ${colors.primary}, ${colors.primary}dd)` }}
       >
         <div className="flex items-center justify-between">
@@ -336,7 +338,7 @@ export default function ChatWindow({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-3 lg:p-4 space-y-3 lg:space-y-4 pb-20 lg:pb-4">
         {messages.map((message) => {
           const isOwnMessage = message.senderId === currentUserId;
           const replyToMessage = message.replyTo ? messages.find(m => m.id === message.replyTo) : null;
@@ -348,10 +350,10 @@ export default function ChatWindow({
           
           return (
             <div key={message.id} className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[85%] sm:max-w-md group relative`}>
+              <div className={`max-w-[85%] lg:max-w-md group relative`}>
                 {/* Group message sender name */}
                 {isGroup && !isOwnMessage && sender && (
-                  <p className={`text-xs mb-1 ml-2 font-medium`} style={{ color: colors.primary }}>
+                  <p className={`text-xs mb-1 ml-3 font-medium`} style={{ color: colors.primary }}>
                     {sender.name}
                   </p>
                 )}
@@ -385,7 +387,7 @@ export default function ChatWindow({
                       <span className="text-xs opacity-70">{message.fileSize}</span>
                     </div>
                   )}
-                  <p className="text-sm">{message.content}</p>
+                  <p className="text-sm lg:text-base">{message.content}</p>
                   <div className="flex items-center justify-between mt-1">
                     <p className={`text-xs ${isOwnMessage ? 'text-white opacity-70' : isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                       {formatTime(message.timestamp)}
@@ -569,7 +571,7 @@ export default function ChatWindow({
       )}
 
       {/* Message Input */}
-      <div className={`p-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} safe-area-inset-bottom`}>
+      <div className={`p-3 lg:p-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} safe-area-inset-bottom`}>
         <div className="relative">
           <div className="flex items-end space-x-3">
             <label className={`p-2 ${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-600 hover:text-gray-800'} transition-colors cursor-pointer`}>
@@ -590,7 +592,7 @@ export default function ChatWindow({
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSend()}
                 placeholder="Type a message..."
-                className={`w-full px-4 py-3 pr-12 rounded-2xl border ${
+                className={`w-full px-4 py-2.5 lg:py-3 pr-12 rounded-2xl border ${
                   isDarkMode
                     ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:bg-gray-700'
                     : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400'
@@ -614,7 +616,7 @@ export default function ChatWindow({
                         setNewMessage(newMessage + emoji);
                         setShowEmojiPicker(false);
                       }}
-                      className={`text-xl ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded p-1 transition-colors`}
+                      className={`text-lg lg:text-xl ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded p-1 transition-colors`}
                     >
                       {emoji}
                     </button>
@@ -626,12 +628,12 @@ export default function ChatWindow({
             <button
               onClick={handleSend}
               disabled={!newMessage.trim()}
-              className="disabled:bg-gray-300 disabled:cursor-not-allowed text-white p-3 rounded-full transition-colors"
+              className="disabled:bg-gray-300 disabled:cursor-not-allowed text-white p-2.5 lg:p-3 rounded-full transition-colors"
               style={{ 
                 backgroundColor: !newMessage.trim() ? '#9CA3AF' : colors.primary
               }}
             >
-              <Send className="w-5 h-5" />
+              <Send className="w-4 h-4 lg:w-5 lg:h-5" />
             </button>
           </div>
         </div>

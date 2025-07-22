@@ -587,19 +587,11 @@ function App() {
   }
 
   return (
-    <div className={`h-screen flex ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} relative`}>
+    <div className={`h-screen flex ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} relative overflow-hidden`}>
       <SplashScreen isVisible={showSplash} />
       
       {!showSplash && (
         <>
-          {/* Mobile Menu Overlay */}
-          {isMobileMenuOpen && (
-            <div 
-              className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-              onClick={() => setIsMobileMenuOpen(false)}
-            />
-          )}
-          
           <Sidebar
             currentUser={currentUserWithStatus}
             isDarkMode={isDarkMode}
@@ -616,10 +608,20 @@ function App() {
             onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           />
           
+          {/* Mobile Menu Overlay */}
+          {isMobileMenuOpen && (
+            <div 
+              className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+          )}
+          
+          {/* Main Content Area */}
+          <div className="flex-1 flex min-w-0 relative">
           {activeView === 'chats' && (
             <>
               {!showProfilePanel ? (
-                <div className="flex flex-1 min-w-0">
+                <>
                   <ChatList
                     chats={chats}
                     selectedChatId={selectedChatId}
@@ -631,33 +633,205 @@ function App() {
                     onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
                   />
                   
-                  {selectedChatId ? (
-                    <ChatWindow
-                      selectedUser={selectedUser}
-                      selectedGroup={selectedGroup}
-                      messages={messages[selectedChatId] || []}
-                      currentUserId={currentUser.id}
-                      onSendMessage={handleSendMessage}
-                      onStartCall={handleStartCall}
-                      onShowUserProfile={() => setShowProfilePanel(true)}
-                      isDarkMode={isDarkMode}
-                      colorPalette={settings.colorPalette}
-                      uploadProgress={uploadProgress}
-                      setUploadProgress={setUploadProgress}
-                      onShowGroupManagement={() => setShowGroupCreation(true)}
-                    />
-                  ) : (
-                    <div className={`flex-1 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}>
-                      <div className="text-center p-8">
-                        <div className={`w-24 h-24 mx-auto mb-4 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} rounded-full flex items-center justify-center`}>
-                          <MessageCircle className={`w-12 h-12 ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`} />
-                        </div>
-                        <h3 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
-                          Welcome to KoNo
-                        </h3>
-                        <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                          Select a conversation to start messaging
-                        </p>
+                  <ChatWindow
+                    selectedUser={selectedUser}
+                    selectedGroup={selectedGroup}
+                    messages={selectedChatId ? messages[selectedChatId] || [] : []}
+                    currentUserId={currentUser.id}
+                    onSendMessage={handleSendMessage}
+                    onStartCall={handleStartCall}
+                    onShowUserProfile={() => setShowProfilePanel(true)}
+                    isDarkMode={isDarkMode}
+                    colorPalette={settings.colorPalette}
+                    uploadProgress={uploadProgress}
+                    setUploadProgress={setUploadProgress}
+                    onShowGroupManagement={() => setShowGroupCreation(true)}
+                    selectedChatId={selectedChatId}
+                    onClearSelection={() => setSelectedChatId(null)}
+                  />
+                </>
+              ) : (
+                <ProfilePanel
+                  user={selectedUser}
+                  group={selectedGroup}
+                  currentUser={currentUser}
+                  onBack={() => setShowProfilePanel(false)}
+                  onStartCall={handleStartCall}
+                  isDarkMode={isDarkMode}
+                  colorPalette={settings.colorPalette}
+                  onShowGroupManagement={() => setShowGroupCreation(true)}
+                />
+              )}
+            </>
+          )}
+          
+          {activeView === 'calls' && (
+            <CallHistory
+              callHistory={callHistory}
+              isDarkMode={isDarkMode}
+              colorPalette={settings.colorPalette}
+            />
+          )}
+          
+          {activeView !== 'chats' && activeView !== 'calls' && (
+            <div className={`flex-1 ${isDarkMode ? 'bg-gray-900' : 'bg-white'} flex items-center justify-center p-4`}>
+              <div className="text-center">
+                <h3 className={`text-xl lg:text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
+                  {activeView.charAt(0).toUpperCase() + activeView.slice(1)}
+                </h3>
+                <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  This feature is coming soon
+                </p>
+              </div>
+            </div>
+          )}
+          </div>
+          
+          {/* Mobile Bottom Navigation */}
+          <div className={`lg:hidden fixed bottom-0 left-0 right-0 ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'} border-t safe-area-inset-bottom z-40`}>
+            <div className="flex items-center justify-around py-2">
+              {[
+                { id: 'chats', icon: MessageCircle, label: 'Chats' },
+                { id: 'calls', icon: Phone, label: 'Calls' },
+                { id: 'contacts', icon: Users, label: 'Contacts' },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    onViewChange(item.id);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-colors ${
+                    activeView === item.id
+                      ? 'text-white'
+                      : isDarkMode
+                      ? 'text-gray-400 hover:text-gray-200'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                  style={activeView === item.id ? { backgroundColor: colors.primary } : {}}
+                >
+                  <item.icon className="w-5 h-5" />
+                  <span className="text-xs font-medium">{item.label}</span>
+                </button>
+              ))}
+              
+              {/* Notifications */}
+              <button
+                onClick={() => {
+                  setShowNotifications(true);
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-colors relative ${
+                  isDarkMode
+                    ? 'text-gray-400 hover:text-gray-200'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                <Bell className="w-5 h-5" />
+                <span className="text-xs font-medium">Alerts</span>
+                {unreadNotificationCount > 0 && (
+                  <span 
+                    className="absolute -top-1 -right-1 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center"
+                    style={{ backgroundColor: colors.primary }}
+                  >
+                    {unreadNotificationCount > 99 ? '99+' : unreadNotificationCount}
+                  </span>
+                )}
+              </button>
+              
+              {/* Menu */}
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-colors ${
+                  isMobileMenuOpen
+                    ? 'text-white'
+                    : isDarkMode
+                    ? 'text-gray-400 hover:text-gray-200'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+                style={isMobileMenuOpen ? { backgroundColor: colors.primary } : {}}
+              >
+                <Settings className="w-5 h-5" />
+                <span className="text-xs font-medium">Menu</span>
+              </button>
+            </div>
+          </div>
+          
+          {/* Mobile Menu Panel */}
+          <div className={`lg:hidden fixed bottom-16 left-0 right-0 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-t transform transition-transform duration-300 z-30 ${
+            isMobileMenuOpen ? 'translate-y-0' : 'translate-y-full'
+          }`}>
+            <div className="p-4 space-y-3">
+              {/* User Profile */}
+              <div className="flex items-center space-x-3 p-3 rounded-lg" style={{ backgroundColor: isDarkMode ? colors.primary + '20' : colors.light }}>
+                <div className="relative">
+                  <img
+                    src={currentUserWithStatus.avatar}
+                    alt={currentUserWithStatus.name}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                  <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${statusColors[currentUserWithStatus.status]} rounded-full border-2 ${isDarkMode ? 'border-gray-800' : 'border-white'}`}></div>
+                </div>
+                <div>
+                  <h3 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    {currentUserWithStatus.name}
+                  </h3>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {statusLabels[currentUserWithStatus.status]}
+                  </p>
+                </div>
+              </div>
+              
+              {/* Menu Items */}
+              <div className="space-y-1">
+                <button
+                  onClick={() => {
+                    setShowSettings(true);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+                    isDarkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-100 text-gray-700'
+                  }`}
+                >
+                  <Settings className="w-5 h-5" />
+                  <span>Settings</span>
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setSettings(prev => ({ ...prev, theme: prev.theme === 'light' ? 'dark' : 'light' }));
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+                    isDarkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-100 text-gray-700'
+                  }`}
+                >
+                  {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                  <span>{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setShowLogoutConfirmation(true);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+                    isDarkMode ? 'hover:bg-gray-700 text-red-400' : 'hover:bg-red-50 text-red-600'
+                  }`}
+                >
+                  <LogOut className="w-5 h-5" />
+                  <span>Logout</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+export default App;
                       </div>
                     </div>
                   )}
