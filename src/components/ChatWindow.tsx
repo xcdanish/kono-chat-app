@@ -25,7 +25,6 @@ export default function ChatWindow({
   messages, 
   currentUserId, 
   currentUser,
-  currentUser,
   onSendMessage, 
   onStartCall,
   onShowUserProfile,
