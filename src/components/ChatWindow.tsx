@@ -358,7 +358,8 @@ export default function ChatWindow({
             : null;
           
           return (
-            <div key={message.id} className={`flex items-end space-x-2 mb-4 ${isOwnMessage ? 'flex-row-reverse space-x-reverse' : ''}`}>
+          <div key={message.id} className={`flex mb-3 ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
+            <div className={`flex items-end space-x-2 max-w-[80%] ${isOwnMessage ? 'flex-row-reverse space-x-reverse' : ''}`}>
               {/* Avatar for incoming messages */}
               {!isOwnMessage && (
                 <div className="flex-shrink-0 mb-1">
@@ -382,18 +383,18 @@ export default function ChatWindow({
                 </div>
               )}
 
-              {/* Message bubble */}
-              <div className={`max-w-[75%] lg:max-w-md group relative`}>
+              {/* Message container */}
+              <div className="group relative flex-1">
                 {/* Sender name for group messages */}
                 {isGroup && !isOwnMessage && sender && (
-                  <p className={`text-xs mb-1 ml-3 font-medium`} style={{ color: colors.primary }}>
+                  <p className={`text-xs mb-1 ${isOwnMessage ? 'text-right mr-3' : 'ml-3'} font-medium`} style={{ color: colors.primary }}>
                     {sender.name}
                   </p>
                 )}
                 
                 {/* Reply indicator */}
                 {replyToMessage && (
-                  <div className={`mb-2 ml-3 mr-3 p-2 rounded-lg border-l-4 ${
+                  <div className={`mb-2 ${isOwnMessage ? 'mr-3' : 'ml-3'} p-2 rounded-lg border-l-4 ${
                     isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-gray-100 border-gray-300'
                   }`}>
                     <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -406,10 +407,10 @@ export default function ChatWindow({
                 )}
                 
                 {/* Message bubble */}
-                <div className={`relative px-4 py-3 rounded-2xl shadow-sm ${
+                <div className={`relative px-4 py-2 rounded-2xl shadow-sm ${
                   isOwnMessage
-                    ? `text-white ${isGroup ? 'rounded-br-md' : 'rounded-br-md'}`
-                    : `${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-900 border border-gray-200'} ${isGroup ? 'rounded-bl-md' : 'rounded-bl-md'}`
+                    ? `text-white rounded-br-md`
+                    : `${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-900 border border-gray-200'} rounded-bl-md`
                 }`}
                 style={isOwnMessage ? { backgroundColor: colors.primary } : {}}>
                   
@@ -428,40 +429,26 @@ export default function ChatWindow({
                   <p className="text-sm lg:text-base leading-relaxed">{message.content}</p>
                   
                   {/* Message footer */}
-                  <div className="flex items-center justify-between mt-2 space-x-2">
+                  <div className={`flex items-center mt-1 space-x-2 ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
                     <p className={`text-xs ${isOwnMessage ? 'text-white/70' : isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                       {formatTime(message.timestamp)}
                       {message.editedAt && ' • edited'}
                     </p>
                     {isOwnMessage && (
-                      <div className="flex items-center space-x-1">
+                      <div className="flex items-center">
                         {getMessageStatusIcon(message.status)}
                       </div>
                     )}
                   </div>
-                  
-                  {/* Message tail */}
-                  <div className={`absolute bottom-0 ${isOwnMessage ? '-right-2' : '-left-2'} w-0 h-0 border-l-8 border-r-8 border-t-8 ${
-                    isOwnMessage 
-                      ? 'border-l-transparent border-r-transparent'
-                      : 'border-l-transparent border-r-transparent'
-                  }`}
-                  style={isOwnMessage ? { 
-                    borderTopColor: colors.primary,
-                    transform: 'rotate(45deg)'
-                  } : {
-                    borderTopColor: isDarkMode ? '#374151' : '#ffffff',
-                    transform: 'rotate(-45deg)'
-                  }}></div>
                 </div>
                 
                 {/* Reactions */}
                 {message.reactions && message.reactions.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2 ml-3">
+                  <div className={`flex flex-wrap gap-1 mt-1 ${isOwnMessage ? 'justify-end mr-3' : 'ml-3'}`}>
                     {message.reactions.map((reaction, index) => (
                       <button
                         key={index}
-                        className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs transition-colors ${
+                        className={`flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs transition-colors ${
                           isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'
                         }`}
                       >
@@ -476,7 +463,7 @@ export default function ChatWindow({
                 
                 {/* Quick reaction picker */}
                 {showReactionPicker === message.id && (
-                  <div className={`absolute ${isOwnMessage ? 'right-0' : 'left-0'} -top-12 flex space-x-1 p-2 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} z-10`}>
+                  <div className={`absolute ${isOwnMessage ? 'right-0' : 'left-0'} -top-12 flex space-x-1 p-2 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} z-20`}>
                     {quickReactions.map((emoji) => (
                       <button
                         key={emoji}
@@ -490,7 +477,7 @@ export default function ChatWindow({
                 )}
                 
                 {/* Message actions on hover */}
-                <div className={`absolute ${isOwnMessage ? 'left-0 -ml-20' : 'right-0 -mr-20'} top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200`}>
+                <div className={`absolute ${isOwnMessage ? 'left-0 -ml-16' : 'right-0 -mr-16'} top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200 z-10`}>
                   <div className={`flex items-center space-x-1 p-1 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                     <button
                       onClick={() => setShowReactionPicker(showReactionPicker === message.id ? null : message.id)}
@@ -526,17 +513,6 @@ export default function ChatWindow({
                   </div>
                 </div>
               </div>
-
-              {/* Avatar for outgoing messages (optional, like WhatsApp) */}
-              {isOwnMessage && (
-                <div className="flex-shrink-0 mb-1">
-                  <img
-                    src={currentUser.avatar}
-                    alt="You"
-                    className="w-8 h-8 rounded-full object-cover"
-                  />
-                </div>
-              )}
             </div>
           );
         })}
