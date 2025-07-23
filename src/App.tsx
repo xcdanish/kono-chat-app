@@ -56,7 +56,7 @@ function App() {
   
   // Only initialize chat and call hooks if authenticated
   const currentUser = authState.user ? { ...authState.user, status: userStatus } : null;
-  const chatHook = currentUser ? useChat(currentUser) : null;
+  const chatHook = useChat(currentUser);
   const { callState, callHistory, startCall, endCall, toggleMute, toggleVideo } = useCall();
 
   // Mock friends
@@ -313,7 +313,7 @@ function App() {
   }
 
   // Don't render main app if user is not available
-  if (!currentUser || !chatHook) {
+  if (!currentUser) {
     return <ComponentLoader />;
   }
 

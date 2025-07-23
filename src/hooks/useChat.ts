@@ -61,6 +61,7 @@ export const useChat = (currentUser: User) => {
   );
 
   const sendMessage = useCallback((content: string, replyTo?: string) => {
+    if (!currentUser) return;
     if (!selectedChatId) return;
     
     const newMessage: Message = {
