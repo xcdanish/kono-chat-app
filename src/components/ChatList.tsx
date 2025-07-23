@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Search, Plus, Users, MessageCircle } from 'lucide-react';
 import { Chat } from '../types';
+import { formatChatTime } from '../utils/formatters';
+import { getColorPalette, statusColors } from '../utils/colorPalettes';
 
 interface ChatListProps {
   chats: Chat[];
@@ -26,36 +28,7 @@ export default function ChatList({
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateMenu, setShowCreateMenu] = useState(false);
 
-  const formatTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
-    
-    if (diffInHours < 24) {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } else {
-      return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-    }
-  };
-
-  const statusColors = {
-    online: 'bg-green-500',
-    away: 'bg-yellow-500',
-    dnd: 'bg-red-500',
-    invisible: 'bg-gray-400'
-  };
-
-  const getColorPalette = () => {
-    const palettes = {
-      blue: { primary: '#3B82F6', secondary: '#DBEAFE', light: '#EFF6FF' },
-      green: { primary: '#10B981', secondary: '#D1FAE5', light: '#ECFDF5' },
-      purple: { primary: '#8B5CF6', secondary: '#EDE9FE', light: '#F5F3FF' },
-      orange: { primary: '#F59E0B', secondary: '#FEF3C7', light: '#FFFBEB' },
-    };
-    return palettes[colorPalette as keyof typeof palettes] || palettes.blue;
-  };
-
-  const colors = getColorPalette();
+  const colors = getColorPalette(colorPalette);
 
   const filteredChats = chats.filter(chat => {
     const name = chat.user?.name || chat.group?.name || '';
@@ -195,7 +168,7 @@ export default function ChatList({
                     )}
                   </div>
                   <span className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'} whitespace-nowrap flex-shrink-0`}>
-                    {formatTime(chat.timestamp)}
+                    {formatChatTime(chat.timestamp)}
                   </span>
                 </div>
                 
