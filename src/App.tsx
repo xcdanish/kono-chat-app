@@ -677,6 +677,7 @@ function App() {
                     selectedGroup={selectedGroup}
                     messages={selectedChatId ? messages[selectedChatId] || [] : []}
                     currentUserId={currentUser.id}
+                    currentUser={currentUserWithStatus}
                     onSendMessage={handleSendMessage}
                     onStartCall={handleStartCall}
                     onShowUserProfile={() => setShowProfilePanel(true)}
